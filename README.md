@@ -15,12 +15,12 @@ All four are written under `out/`. Nothing else in the pipeline writes files.
 
 | Artifact | Built by | Consumed by | What it is |
 |---|---|---|---|
-| `out/plain.json` | `build-dict` | Plover, on a dumb editor | stroke → Plover keystroke value; every closer typed, cursor walks back from the document end |
-| `out/smart.json` | `build-dict` | Plover, on an auto-closing editor | stroke → Plover keystroke value; only the keystrokes the editor won't auto-supply, movement computed against the resulting buffer |
-| `out/plover-keys.json` | `build-nvim` | Plover | stroke → a sentinel-wrapped token (`@@…@@`); Plover stays a dumb lookup table |
+| `out/plain-ts.json` | `build-dict` | Plover, on a dumb editor | stroke → Plover keystroke value; every closer typed, cursor walks back from the document end |
+| `out/smart-ts.json` | `build-dict` | Plover, on an auto-closing editor | stroke → Plover keystroke value; only the keystrokes the editor won't auto-supply, movement computed against the resulting buffer |
+| `out/vim-snippets.json` | `build-nvim` | Plover | stroke → a sentinel-wrapped token (`@@…@@`); Plover stays a dumb lookup table |
 | `out/snippets.json` | `build-nvim` | the [`nvim/`](nvim/) plugin | token → LSP snippet body with tabstops; the editor owns cursor placement |
 
-`plain.json` and `smart.json` are two profiles of the *same* mechanism (see
+`plain-ts.json` and `smart-ts.json` are two profiles of the *same* mechanism (see
 [docs/pipeline.md](docs/pipeline.md)); both load together on the device, so the
 real size budget is their sum. The nvim path exists because an LSP snippet engine
 places the cursor via native tabstops, sidestepping the `{#Up}{#Left}` movement
@@ -31,8 +31,8 @@ math the Plover-only dictionaries need.
 Each binary reads `dict.steno` from the workspace root and writes only under `out/`.
 
 ```sh
-cargo run --bin build-dict    # out/plain.json, out/smart.json
-cargo run --bin build-nvim    # out/plover-keys.json, out/snippets.json
+cargo run --bin build-dict    # out/plain-ts.json, out/smart-ts.json
+cargo run --bin build-nvim    # out/vim-snippets.json, out/snippets.json
 cargo run --bin measure       # size matrix (generic-arg pool × param counts); writes nothing
 ```
 

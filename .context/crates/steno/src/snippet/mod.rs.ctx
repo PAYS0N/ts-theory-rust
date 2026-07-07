@@ -1,0 +1,14 @@
+Renders a single `TypedEntry` (from `crate::expand`) to an LSP snippet body — the target used for editor-side expansion (Neovim's `vim.snippet`, VS Code), as opposed to `crate::render` which bakes cursor movement into Plover keystrokes. Because the editor's snippet engine owns cursor placement via tabstops, this file has no movement math, no closer-dropping, and no plain/smart split — those concerns exist only in the render target.
+
+Core logic is a `Chunk` walk (chunk enum defined in `crate::parse`) that differs sharply between terminal and non-terminal entries:
+
+- **Non-terminal** (`render_non_terminal`): treated as a partial/pre-function preview. Brackets are stripped from literal text (`is_bracket`/`strip_brackets`), `Chunk::Brace`, `Newline`, `BodyBreak`, and `Landing` are silently dropped (not just no-ops — intentionally irrelevant for an intermediate stroke), and no tabstops are emitted at all.
+- **Terminal** (`render_terminal`): landings become LSP tabstops via `tab_index`, which renumbers landing indices to *tab order*, not their raw numeric value — the lowest landing index becomes `${1}` ascending, but the **highest** landing becomes `${0}`, LSP's special "final cursor exit" tabstop. This remapping is the one non-obvious piece of math in the file; get the sort/index logic wrong and cursor exit order breaks in the editor. `BodyBreak` only emits `\n` when `entry.one_liner` is false; plain `Newline` chunks always emit `\n`.
+
+Any other `Chunk` variant reaching either renderer (i.e. anything not explicitly handled) produces `SnippetError` via `unresolved()` — this is a correctness backstop for chunks that should have been resolved upstream by `crate::expand`.
+
+Text escaping (`esc`) escapes only `\`, `$`, and `}` — the characters meaningful in LSP snippet syntax — and is applied to all literal text in the terminal path but only to bracket-stripped text in the non-terminal path. `push_brace` encodes an LSP quirk: a lone literal `{` needs no escaping, but `}` must always be escaped (`\}`) or LSP parses it as closing a placeholder.
+
+`SENTINEL_OPEN`/`SENTINEL_CLOSE` (both `"@@"`) wrap the keyset token Plover emits so the Neovim plugin can locate it in inserted text without colliding with real content — this string must stay in sync with the nvim plugin's own sentinel-matching code; drifting either side silently breaks snippet triggering.
+
+Public API: `render_snippet(entry: &TypedEntry) -> Result<SnippetEntry, SnippetError>` dispatches on `entry.terminal` to the two internal renderers. `SnippetEntry` carries `key_id` (the Plover stroke, used as the table key), `body` (LSP snippet body text), and `terminal` (bool). The `build` submodule (`mod build`) is re-exported here as `SnippetBuild`/`build_snippets` — not defined in this file, but this is the only place they're exposed to the rest of the crate.

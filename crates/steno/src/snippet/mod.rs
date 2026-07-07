@@ -12,7 +12,6 @@
 
 use crate::error::SnippetError;
 use crate::expand::TypedEntry;
-use crate::json_out::OrderedMap;
 use crate::parse::Chunk;
 
 /// Sentinel pair wrapping the keyset token Plover types (so the plugin can find
@@ -162,36 +161,5 @@ pub fn render_snippet(entry: &TypedEntry) -> Result<SnippetEntry, SnippetError> 
     }
 }
 
-/// Both nvim artifacts built from the typed entries.
-pub struct SnippetBuild {
-    /// Plover dictionary: stroke → sentinel-wrapped token to type.
-    pub plover_keys: OrderedMap,
-    /// Snippet table: `key_id` → LSP body.
-    pub snippets: OrderedMap,
-    /// Strokes that mapped to two different bodies.
-    pub collisions: Vec<String>,
-}
-
-/// Build both artifacts from the typed entries.
-///
-/// # Errors
-/// Propagates any [`SnippetError`] from rendering an entry.
-pub fn build_snippets(entries: &[TypedEntry]) -> Result<SnippetBuild, SnippetError> {
-    let mut plover_keys = OrderedMap::new();
-    let mut snippets = OrderedMap::new();
-    let mut collisions = Vec::new();
-    for e in entries {
-        let SnippetEntry { key_id, body, .. } = render_snippet(e)?;
-        if snippets.get(&key_id).is_some_and(|prev| prev != body) {
-            collisions.push(key_id.clone());
-        }
-        let token = format!("{SENTINEL_OPEN}{key_id}{SENTINEL_CLOSE}");
-        snippets.insert(key_id, body);
-        plover_keys.insert(e.stroke.clone(), token);
-    }
-    Ok(SnippetBuild {
-        plover_keys,
-        snippets,
-        collisions,
-    })
-}
+mod build;
+pub use build::{SnippetBuild, build_snippets};

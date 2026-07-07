@@ -1,0 +1,30 @@
+`crates/steno/src/snippet/` renders `TypedEntry` values into LSP snippet
+bodies and assembles the two nvim/Plover build artifacts (the Plover
+dictionary and the LSP snippet table) from them. This is the
+editor-facing sibling of `crate::render`: cursor placement is delegated
+to the editor's snippet engine via tabstops, not baked into keystrokes.
+
+The terminal/non-terminal split from `mod.rs` propagates directly into
+`build.rs`'s routing: `render_snippet` dispatches per-entry rendering,
+and `build_snippets` uses `entry.terminal` (echoed in the returned
+`SnippetEntry.terminal`) to decide whether the rendered body goes into
+`plover_keys` as bare glued literal text or into `snippets` sentinel-wrapped
+and keyed by `key_id`. Getting this classification wrong doesn't crash
+anything — it silently corrupts editor output, either by exposing
+sentinel tokens to Plover's backspace-correction timing or by leaving a
+terminal construct unexpanded. `SENTINEL_OPEN`/`SENTINEL_CLOSE` (`"@@"`,
+defined in `mod.rs`) is the wire format `build.rs` relies on to wrap
+terminal entries, and it must stay in sync with the nvim plugin's own
+sentinel matching — a cross-repo coupling, not just cross-file.
+
+`mod.rs` is the renderer (`render_snippet`, `SnippetEntry`, the tabstop
+math, escaping rules) and owns the sentinel constants; `build.rs` is the
+aggregator (`build_snippets`, `SnippetBuild`) that consumes rendered
+entries in bulk, tracks stroke collisions per `key_id` (last-insert wins,
+non-fatal), and produces deterministically-ordered output via
+`OrderedMap` from `json_out`. A typical cross-file change — e.g. altering
+what counts as "terminal" — must be reasoned about in both files: the
+renderer's chunk-handling behavior and the aggregator's routing decision
+are two halves of one classification.
+
+No intent.md exists for this directory to check against.

@@ -4,12 +4,14 @@
 
 mod append;
 mod counts;
+mod family;
 mod fill;
 mod lineflag;
 mod types;
 
 pub use append::{expand_types, expand_types_one};
 pub use counts::{ITERATION_BASE, expand_all, expand_counts};
+pub use family::fix_family_terminals;
 pub use lineflag::expand_line_flag;
 pub use types::{TypeDef, TypeOptions, TypeSet, build_type_set};
 
@@ -81,5 +83,6 @@ pub fn expand_dict(
             typed.extend(expand_types_one(&expanded, &opts)?);
         }
     }
+    fix_family_terminals(&mut typed);
     expand_line_flag(&typed)
 }

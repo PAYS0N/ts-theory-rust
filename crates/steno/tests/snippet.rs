@@ -126,7 +126,8 @@ fn build_no_collisions() {
     assert_eq!(build.collisions, Vec::<String>::new());
 }
 
-/// The Plover dict maps a stroke to its sentinel-wrapped token.
+/// The Plover dict maps a stroke to its sentinel-wrapped token, itself
+/// wrapped in Plover's `{^}` glue so it attaches with no stray space.
 #[test]
 fn plover_token_wrapped() {
     let entries = typed().unwrap();
@@ -134,18 +135,86 @@ fn plover_token_wrapped() {
     let token = build.plover_keys.get("STKWR-PBGS/TPH-FLT").unwrap();
     assert_eq!(
         token,
-        format!("{SENTINEL_OPEN}STKWR-PBGS/TPH-FLT{SENTINEL_CLOSE}")
+        format!("{{^}}{SENTINEL_OPEN}STKWR-PBGS/TPH-FLT{SENTINEL_CLOSE}{{^}}")
     );
 }
 
-/// Every Plover token resolves to a snippet body, and there are over 1000.
+/// A non-terminal partial is typed as plain `{^}...{^}` text, with no
+/// sentinel — the nvim plugin must never intercept it, since it will be
+/// superseded by a longer chord and Plover corrects that by backspacing
+/// exactly what it last typed.
+#[test]
+fn non_terminal_plover_key_has_no_sentinel() {
+    let entries = typed().unwrap();
+    let e = by_stroke(&entries, "STKWR-PBGS/PR-FLT").unwrap();
+    assert!(!e.terminal);
+    let build = build_snippets(&entries).unwrap();
+    let value = build.plover_keys.get("STKWR-PBGS/PR-FLT").unwrap();
+    assert_eq!(value, "{^}function : Promise {^}");
+    assert!(!value.contains(SENTINEL_OPEN), "no sentinel on a partial");
+}
+
+/// A "family root" placeholder — a stroke with no `%t` of its own, but with
+/// other dict.steno entries sharing it as a `/`-prefix — is never terminal,
+/// no matter that `expand_types_one` alone would call it a one-stroke leaf.
+#[test]
+fn family_root_strokes_are_non_terminal() {
+    let entries = typed().unwrap();
+    for stroke in ["STKWR-PBGS", "STKWR*PLT", "STKWR-RBGT"] {
+        let e = by_stroke(&entries, stroke).unwrap();
+        assert!(!e.terminal, "{stroke} must not be terminal");
+    }
+}
+
+/// A family-root's Plover value is plain `{^}...{^}` text with no sentinel,
+/// same as any other non-terminal partial.
+#[test]
+fn family_root_plover_key_has_no_sentinel() {
+    let entries = typed().unwrap();
+    let build = build_snippets(&entries).unwrap();
+    for stroke in ["STKWR-PBGS", "STKWR*PLT", "STKWR-RBGT"] {
+        let value = build.plover_keys.get(stroke).unwrap();
+        assert!(
+            !value.contains(SENTINEL_OPEN),
+            "{stroke} must have no sentinel, got {value}"
+        );
+    }
+}
+
+/// Corpus-wide invariant: any entry whose stroke is a strict `/`-prefix of
+/// another entry's stroke can never be terminal. This is the general safety
+/// net so a future family-root stroke can't reintroduce the buffer-corruption
+/// bug silently.
+#[test]
+fn no_terminal_is_a_prefix_of_another_stroke() {
+    let entries = typed().unwrap();
+    for e in &entries {
+        let is_a_prefix = entries
+            .iter()
+            .any(|other| other.stroke.starts_with(&format!("{}/", e.stroke)));
+        assert!(
+            !(is_a_prefix && e.terminal),
+            "{} is a prefix of another stroke but is marked terminal",
+            e.stroke
+        );
+    }
+}
+
+/// Every terminal's Plover token resolves to a snippet body, and there are
+/// over 1000 such bodies.
 #[test]
 fn tokens_resolve_to_bodies() {
     let entries = typed().unwrap();
     let build = build_snippets(&entries).unwrap();
     for (_, token) in build.plover_keys.iter() {
-        let key = token
-            .strip_prefix(SENTINEL_OPEN)
+        let Some(rest) = token
+            .strip_prefix("{^}")
+            .and_then(|t| t.strip_prefix(SENTINEL_OPEN))
+        else {
+            continue; // a non-terminal's plain-text value, not a token
+        };
+        let key = rest
+            .strip_suffix("{^}")
             .and_then(|t| t.strip_suffix(SENTINEL_CLOSE))
             .unwrap();
         assert!(build.snippets.get(key).is_some(), "token {key} has a body");

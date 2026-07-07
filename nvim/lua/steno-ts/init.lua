@@ -1,6 +1,6 @@
 -- steno-ts — expand Plover-emitted keyset tokens into LSP snippets.
 --
--- Plover (loaded with out/plover-keys.json) types a sentinel-wrapped token such
+-- Plover (loaded with out/vim-snippets.json) types a sentinel-wrapped token such
 -- as «STKWR-PBGS/TPH-FLT». This plugin watches insert mode, and when a complete
 -- token appears it deletes the token and expands the matching snippet body from
 -- out/snippets.json via Neovim's built-in `vim.snippet` (requires 0.10+).

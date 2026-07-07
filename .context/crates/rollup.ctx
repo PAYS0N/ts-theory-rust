@@ -1,10 +1,5 @@
-`crates/` is the Rust workspace root; the single member is `steno`, the
-`.steno` → Plover dictionary / LSP snippet compiler. Depending on this
-workspace means depending on `steno`'s public API and its two binaries —
-there is no other crate here to coordinate with, no shared workspace-level
-code, and no cross-crate coupling to track. Workspace-level changes
-(adding a crate, editing a shared `Cargo.toml` at this level) aren't
-reflected in the current tree; everything of substance lives one level
-down in `steno/`.
+`crates/` is a Cargo workspace root containing a single member, `steno`, the `.steno`-to-Plover-dictionary compiler and its LSP/editor tooling. Depending on this workspace means depending on `steno/src/`'s pipeline (`parse` → `expand` → `render`/`snippet`/`blocks`) or its three standalone binaries; there is currently no other crate to coordinate with, so no cross-crate coupling, shared-version, or workspace-manifest concern exists at this level.
 
-No `intent.md` exists for this directory, so no divergence can be assessed.
+All substantive facts — the compiler pipeline, its shared subsystems, the `dict.steno` test-fixture entanglement, the `TypedEntry` layout landmine, and the binaries' independent workspace-root handling — live in `steno/rollup.ctx` and are not restated here. A change touching the workspace `Cargo.toml` (adding a member, bumping shared dependency versions) is the only kind of edit that would originate at this level rather than inside `steno/`.
+
+No `intent.md` exists for this directory, so no divergence to report.

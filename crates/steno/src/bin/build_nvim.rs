@@ -1,6 +1,6 @@
 //! Build the Neovim snippet artifacts from `dict.steno`.
 //!
-//! Emits `out/plover-keys.json` (stroke → keyset token) and `out/snippets.json`
+//! Emits `out/vim-snippets.json` (stroke → keyset token) and `out/snippets.json`
 //! (token → LSP snippet body). Plover stays a dumb lookup table; the nvim plugin
 //! loads `snippets.json` and expands the token into a real snippet with
 //! tabstops. Keyset collisions abort before any file is written.
@@ -75,7 +75,7 @@ fn run() -> Result<(), String> {
     let out_dir = root().join("out");
     fs::create_dir_all(&out_dir).map_err(|e| e.to_string())?;
     let out_dir = fs::canonicalize(&out_dir).map_err(|e| e.to_string())?;
-    let a = write_json(&out_dir, "plover-keys.json", &build.plover_keys)?;
+    let a = write_json(&out_dir, "vim-snippets.json", &build.plover_keys)?;
     let b = write_json(&out_dir, "snippets.json", &build.snippets)?;
     out_line(&format!("  combined: {} bytes", a + b));
     Ok(())

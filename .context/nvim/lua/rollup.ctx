@@ -1,13 +1,5 @@
-`nvim/lua/` is the Neovim runtime-configuration root: a single plugin
-subtree that Neovim's Lua host loads at startup. Depending on this
-directory gets you whatever `steno-ts/` exposes; there is no other code
-here — no top-level Lua files, no other plugin subdirectories.
+`nvim/lua/` is the Lua-side runtime for a Neovim plugin whose build artifacts come from this repo's TypeScript compiler (`src/snippet.ts`). Depending on this directory means loading the `steno-ts` plugin via its single entry point, `M.setup(opts)`; there is no other public surface, and no code here executes except through that call and the autocmds it installs.
 
-There is no cross-file or cross-subdirectory coupling to describe beyond
-what already lives in `steno-ts/rollup.ctx`: that one child holds the
-entire contract (sentinel format, JSON schema dependency on the TS
-compiler's build output, `M.setup(opts)` entry point). A change anywhere
-in this subtree starts and ends inside `steno-ts/`.
+The subtree currently has exactly one child, `steno-ts/`, which is the entire implementation — a single `init.lua` with no internal cross-file coupling. The only coupling that matters crosses the repo boundary: `init.lua` and `src/snippet.ts` must agree on the `"@@"` sentinel format and the JSON snippet-table schema, since the Lua side only consumes what the TS side emits. That agreement is undocumented by any type system on this side, so a schema or fence-format change in the TS compiler requires a matching edit here, and there's no compiler error to catch a mismatch — expansion just stops silently.
 
-No intent.md exists for this directory, so there is nothing to check for
-divergence.
+No intent.md exists for this directory, so there's nothing to check for divergence.

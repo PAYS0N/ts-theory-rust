@@ -1,0 +1,7 @@
+{
+  "hash": "83b81ec467682d46061124437ca3590ea276227705b8841ccc5fc80820ae3fb0",
+  "children": {
+    "build.rs": "f:2fe7302dd496bf9ab15b3f822695f0f44d6d22feb6b912cd36e0bdb048df0173",
+    "mod.rs": "f:7212339c8a071cdb229fc6588cee51efff3fc28211a08e3a3871045d2e269bd8"
+  }
+}

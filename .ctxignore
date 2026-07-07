@@ -19,5 +19,6 @@ CLAUDE.md
 .gitignore
 *.toml
 .claude
-
+prompts
 out
+README.*

@@ -20,9 +20,9 @@ dict.steno
  Vec<TypedEntry>
    │  line-flag        (expand/lineflag.rs)   add the one-liner (U) variant
    ▼
- Vec<TypedEntry>  ──┬── render plain  (render/plain.rs)  ─→ out/plain.json
-                    ├── render smart  (render/smart.rs)  ─→ out/smart.json
-                    └── snippets      (snippet.rs)       ─→ out/plover-keys.json,
+ Vec<TypedEntry>  ──┬── render plain  (render/plain.rs)  ─→ out/plain-ts.json
+                    ├── render smart  (render/smart.rs)  ─→ out/smart-ts.json
+                    └── snippets      (snippet.rs)       ─→ out/vim-snippets.json,
                                                             out/snippets.json
 ```
 
@@ -62,6 +62,18 @@ never a required stroke. The output `TypedEntry` records whether it is
 **terminal** (a complete construct) or a non-terminal append step, and carries
 its source `Entry` for flag lookups downstream.
 
+A second, unrelated source of non-terminal-ness is caught only after every
+entry is known: a "family root" stroke (e.g. `STKWR-PBGS`, a placeholder with
+no `%t` of its own) can be a strict `/`-segment-prefix of other, separately
+authored entries later in `dict.steno` (`STKWR-PBGS/TPH-FLT`, ...).
+`expand_types_one` sees one entry at a time and has no way to know this, so it
+falls through to its one-stroke-leaf branch and marks it terminal. A
+whole-batch post-pass, `fix_family_terminals`
+(`expand/family.rs`, run in `expand_dict` right after the main Pass A/B loop
+and before line-flag), forces `terminal = false` on any entry that is such a
+prefix — the same invariant the nvim path already relies on for arity-chain
+partials.
+
 ### line-flag — `expand/lineflag.rs`
 
 Adds the one-liner variant (the U flag): a copy of each eligible entry in which
@@ -87,9 +99,17 @@ The nvim path. An LSP snippet engine owns cursor placement via tabstops, so ther
 is no movement math and no plain/smart split. Landings are renumbered to tab
 order: the lowest becomes `${1}` and ascends, the **highest** becomes `${0}` (the
 LSP exit). Non-terminal strokes emit the same bracket-stripped partial as the
-plain profile, with no tabstops. `build_snippets` emits two maps: `plover-keys`
-(stroke → a `@@…@@` sentinel-wrapped token that Plover types) and `snippets`
-(token → LSP body).
+plain profile, with no tabstops — and, critically, **no sentinel**: they're typed
+as plain `{^}…{^}` text Plover owns outright, exactly like the plain/smart
+profiles. A non-terminal is always superseded by a longer chord, and Plover
+corrects that by backspacing exactly what it last typed; if the nvim plugin had
+already rewritten that text into a snippet body, Plover's backspace count would
+no longer match the buffer and the correction would eat whatever precedes it.
+Only a terminal — a completed construct, never itself extended by a later
+stroke — is safe to hand to the nvim plugin. `build_snippets` emits two maps:
+`plover-keys` (stroke → either a plain `{^}…{^}` partial for a non-terminal, or
+a `{^}@@…@@{^}` sentinel-wrapped token for a terminal) and `snippets` (terminal
+`key_id` → LSP body).
 
 ### `@literal` blocks — `blocks.rs`
 

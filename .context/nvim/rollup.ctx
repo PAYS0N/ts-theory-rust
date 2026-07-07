@@ -1,20 +1,5 @@
-`nvim/` is the Neovim-side consumer of the steno-ts theory compiler's
-build output: it turns `@@token@@` sentinels (typed by Plover via a
-generated stroke dictionary) into real LSP snippets with tabstops. A
-reader one level up gets a self-contained plugin directory plus its
-README describing the external contract; there's no other code at this
-level.
+`nvim/` is the Lua half of the steno-ts plugin for Neovim — a thin runtime that consumes JSON snippet tables produced by the repo's TypeScript compiler (`src/snippet.ts`) and turns them into live buffer expansions inside the editor. Depending on this directory means calling `require("steno-ts").setup(opts)`; nothing else is exposed, and nothing runs until that call installs its autocmds.
 
-The whole implementation is one hop down, in `lua/steno-ts/` (reachable
-via `lua/`), which owns the sentinel format, the `M.setup(opts)` entry
-point, and the runtime dependency on two paired JSON artifacts
-(`plover-keys.json`, `snippets.json`) produced together by
-`build-nvim` — regenerating one without the other breaks token matching.
-The README documents the external contract and a known, accepted
-limitation (stray characters on chained type-append expansions through
-non-terminal heads, caused by Plover's retro-delete counting original
-token length rather than expanded length); this is not something to "fix"
-inside the Lua code without addressing it at the Plover/compiler
-boundary.
+All of the substance is one level down in `lua/steno-ts/init.lua`; this top-level directory contributes only the path structure Neovim's runtime path expects (`nvim/lua/steno-ts/`) so the plugin can be found by `require`. There is no code, config, or coupling at this level beyond that directory layout — the cross-cutting concern (the `"@@"` sentinel and snippet-table schema shared with `src/snippet.ts`) is already documented in `lua/rollup.ctx` and not restated here.
 
-No intent.md exists here, so there is nothing to check for divergence.
+No intent.md exists for this directory, so there's nothing to check for divergence.

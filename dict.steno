@@ -33,8 +33,16 @@ function %0(%1): %t {%b%2}
 ````STKWR-PBGS/-R
 (%0) => %1
 ````
-````STKWR-PBGS/-RD
+````STKWR-PBGS/*R
 (%0) => {
+	return%1
+}
+````
+````STKWR-PBGS/-RT
+(%0): %t => %1
+````
+````STKWR-PBGS/*RT
+(%0): %t => {
 	return%1
 }
 ````
@@ -92,11 +100,12 @@ if(%0) {%b%1}
 ````STKWR-FT
 if(!%0) {%b%1}
 ````
+````STKWR-FPB
+if(%0 === %d) {%b%1}
+````
+@count AOE
 ````STKWR-FGT
 if(%0 === false) {%b%1}
-````
-````STKWR-FZ
-if(%0 === 0) {%b%1}
 ````
 ````STKWR-FTS
 if(%0 === undefined) {%b%1}
@@ -117,6 +126,10 @@ else if(%0) {%b%1}
 ````STKWR*FT
 else if(!%0) {%b%1}
 ````
+````STKWR*FPB
+else if(%0 === %d) {%b%1}
+````
+@count AOE
 ````STKWR*FRT
 else if(%0 === false) {%b%1}
 ````
@@ -172,7 +185,7 @@ for(const key%0 in %1){%b%2}
 ````STKWR*L
 while(%0) {%b}
 ````
-````STKWR*LP
+````STKWR*PL
 let i: number = 0
 while(i++ < %0) {%b%1}
 ````
@@ -318,78 +331,169 @@ this.
 ````STKWR*PLT
 pre-method
 ````
-````STKWR*PLT/PHAP
+````STKWR*PLT/R-PL
 .map((%0) => %1)
 ````
-````STKWR*PLT/PHAPD
+````STKWR*PLT/R*PL
 .map((%0) => {\nreturn %1})
 ````
-````STKWR*PLT/TPEURLT
+````STKWR*PLT/R-FLT
 .filter((%0) => %1)
 ````
-````STKWR*PLT/TPEURLTD
+````STKWR*PLT/R*FLT
 .filter((%0) => {\nreturn %1})
 ````
-````STKWR*PLT/RAOUS
+````STKWR*PLT/R-RDZ
 .reduce((%0, %1) => %2, %3)
 ````
-````STKWR*PLT/RAOUSD
+````STKWR*PLT/R*RDZ
 .reduce((%0, %1) => {\nreturn %2}, %3)
 ````
-````STKWR*PLT/RAOUSZ
+````STKWR*PLT/R-RS
 .reduce((acc, curr) => %0, %1)
 ````
-````STKWR*PLT/RAOUSDZ
+````STKWR*PLT/R*RS
 .reduce((acc, curr) => {\nreturn %0}, %1)
 ````
-````STKWR*PLT/TP-R
+````STKWR*PLT/R-FP
 .forEach((%0) => %1)
 ````
-````STKWR*PLT/TP-RD
+````STKWR*PLT/R*FP
 .forEach((%0) => {\nreturn %1})
 ````
-````STKWR*PLT/TP
+````STKWR*PLT/R-FPBD
 .find((%0) => %1)
 ````
-````STKWR*PLT/TP-D
+````STKWR*PLT/R*FPBD
 .find((%0) => {\nreturn %1})
 ````
-````STKWR*PLT/TP-BGS
+````STKWR*PLT/R-FBGS
 .findIndex((%0) => %1)
 ````
-````STKWR*PLT/TP-BGSD
+````STKWR*PLT/R*FBGS
 .findIndex((%0) => {\nreturn %1})
 ````
-````STKWR*PLT/SOPL
+````STKWR*PLT/R-FPL
 .some((%0) => %1)
 ````
-````STKWR*PLT/SOPLD
+````STKWR*PLT/R*FPL
 .some((%0) => {\nreturn %1})
 ````
-````STKWR*PLT/EFR
+````STKWR*PLT/R-FR
 .every((%0) => %1)
 ````
-````STKWR*PLT/EFRD
+````STKWR*PLT/R*FR
 .every((%0) => {\nreturn %1})
 ````
-````STKWR*PLT/SORT
-.sort()
-````
-````STKWR*PLT/SO*RT
+````STKWR*PLT/R-FRT
 .sort((a, b) => %0)
 ````
-````STKWR*PLT/SO*RTD
+````STKWR*PLT/R*FRT
 .sort((a, b) => {\nreturn 0})
 ````
-````STKWR*PLT/TPHRAT
+````STKWR*PLT/R-FPT
 .flatMap((%0) => %1)
 ````
-````STKWR*PLT/TPHRATD
+````STKWR*PLT/R*FPT
 .flatMap((%0) => {\nreturn %1})
 ````
 ````STKWR*BGS
 .at(%0)
 ````
+
+
+// string methods
+
+````STKWR*PLT/STR-RPLT
+.trim()
+````
+````STKWR*PLT/STR-RPLTD
+.trimStart()
+````
+````STKWR*PLT/STR-RPLTZ
+.trimEnd()
+````
+````STKWR*PLT/STR-PS
+.toUpperCase()
+````
+````STKWR*PLT/STR-LS
+.toLowerCase()
+````
+````STKWR*PLT/STR-FLS
+.slice(%0, %1)
+````
+````STKWR*PLT/STR-FBS
+.substring(%0, %1)
+````
+````STKWR*PLT/STR-FPLT
+.split(%0)
+````
+````STKWR*PLT/STR-RPLS
+.replace(%0, %1)
+````
+````STKWR*PLT/STR-RPLSZ
+.replaceAll(%0, %1)
+````
+````STKWR*PLT/STR-BGD
+.includes(%0)
+````
+````STKWR*PLT/STR*FT
+.startsWith(%0)
+````
+````STKWR*PLT/STR*PBT
+.endsWith(%0)
+````
+````STKWR*PLT/STR-PD
+.padStart(%0, %1)
+````
+````STKWR*PLT/STR-PZ
+.padEnd(%0, %1)
+````
+````STKWR*PLT/STR-RPT
+.repeat(%0)
+````
+````STKWR*PLT/STR-PBT
+.concat(%0)
+````
+````STKWR*PLT/STR-FPT
+.charAt(%0)
+````
+````STKWR*PLT/STR-FPTD
+.charCodeAt(%0)
+````
+````STKWR*PLT/STR-BGS
+.indexOf(%0)
+````
+````STKWR*PLT/STR-FBGS
+.lastIndexOf(%0)
+````
+````STKWR*PLT/STR-FG
+.toString()
+````
+
+// math methods
+````STKWR*PLT/PH-BS
+Math.abs(%0)
+````
+````STKWR*PLT/PH-LS
+Math.ceil(%0)
+````
+````STKWR*PLT/PH-FRL
+Math.floor(%0)
+````
+````STKWR*PLT/PH-BGS
+Math.max(%0)
+````
+````STKWR*PLT/PH-PB
+Math.min(%0)
+````
+````STKWR*PLT/PH-RD
+Math.random(%0)
+````
+````STKWR*PLT/PH-RT
+Math.sqrt(%0)
+````
+
 
 
 // Types for secondary strokes - NOT VALID ON THEIR OWN (marked @type).

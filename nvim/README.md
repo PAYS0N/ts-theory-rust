@@ -9,7 +9,7 @@ need.
 ## How it fits together
 
 ```
-chord ─► Plover (out/plover-keys.json)  stroke ─► @@keyset token@@
+chord ─► Plover (out/vim-snippets.json)  stroke ─► @@keyset token@@
         types the token into the editor
                          │
                          ▼
@@ -20,10 +20,10 @@ chord ─► Plover (out/plover-keys.json)  stroke ─► @@keyset token@@
 The compiler in this repo produces both files:
 
 ```sh
-cargo run --bin build-nvim   # writes out/plover-keys.json and out/snippets.json
+cargo run --bin build-nvim   # writes out/vim-snippets.json and out/snippets.json
 ```
 
-- Load **`out/plover-keys.json`** as a Plover dictionary (it maps every stroke to
+- Load **`out/vim-snippets.json`** as a Plover dictionary (it maps every stroke to
   a `@@…@@` token).
 - Point the plugin at **`out/snippets.json`** (token → snippet body).
 

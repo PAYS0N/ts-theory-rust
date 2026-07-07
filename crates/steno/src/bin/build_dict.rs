@@ -1,4 +1,4 @@
-//! Build the Plover JSON dictionaries (`out/plain.json`, `out/smart.json`)
+//! Build the Plover JSON dictionaries (`out/plain-ts.json`, `out/smart-ts.json`)
 //! from `dict.steno`.
 //!
 //! Pipeline: parse → Pass A (counts) → Pass B (types) → render. Both profiles
@@ -84,8 +84,8 @@ fn run() -> Result<(), String> {
     let out_dir = root().join("out");
     fs::create_dir_all(&out_dir).map_err(|e| e.to_string())?;
     let out_dir = fs::canonicalize(&out_dir).map_err(|e| e.to_string())?;
-    let plain_bytes = write_dict(&out_dir, "plain", &plain.dict)?;
-    let smart_bytes = write_dict(&out_dir, "smart", &smart.dict)?;
+    let plain_bytes = write_dict(&out_dir, "plain-ts", &plain.dict)?;
+    let smart_bytes = write_dict(&out_dir, "smart-ts", &smart.dict)?;
     out_line(&format!(
         "  combined (both load on device): {} bytes",
         plain_bytes + smart_bytes

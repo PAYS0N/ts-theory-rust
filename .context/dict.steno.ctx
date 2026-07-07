@@ -1,61 +1,11 @@
-# dict.steno — Plover dictionary source, parsed by src/parse.ts
+Source dictionary for a Plover steno-to-JS/TS shorthand system, parsed by `src/parse.ts` into the actual Plover JSON dictionary. This file is the single source of truth for stroke→snippet mappings; edits here require re-running the parse step to take effect (nothing consumes `dict.steno` directly at runtime).
 
-Strict, machine-parsed source for a Plover steno dictionary (TS/JS coding
-shorthand). This is the file to edit when adding/changing a stroke-to-snippet
-mapping; it replaces the older informal `snippets.txt`. Every entry is a
-fenced block (` ```` `) whose opening line is the stroke (or `ROOT/SELECTOR`
-for two-stroke families), whose body is the template, and which may be
-followed by bare directive lines (`@count`, `@arity`, `@multiline`, `@fuse`,
-`@type`, `@noarg`, `@literal`) that attach to the entry immediately above.
-`#`/`//` lines are comments. **The exact grammar of directives and template
-operators below is re-implemented in src/parse.ts — changing the meaning of
-any operator or directive here without updating that parser breaks every
-entry in the file.**
+Format: each entry is a stroke on the opening ` ```` ` fence, then a template on the line(s) before the closing fence. `/`-joined strokes on the fence (e.g. `STKWR-PBGS/-FLT`) mean "root stroke followed by a modifier stroke," used throughout for method-family and type-append lookups. Directives (`@count KEYS`, `@arity N`, `@multiline`, `@fuse`, `@type`, `@noarg`, `@literal`) are bare lines immediately after an entry and bind to the entry above them, not below — a directive with no preceding entry is a parse error in `parse.ts`.
 
-## Template operator semantics (load-bearing, easy to get wrong)
+Template operators an editor must get exactly right: `%0`-`%9` are tabstop/landing points (plain profile always lands on `%0`); `%d` emits the in-scope count as a literal digit and is never itself a landing point — outside a `%[...%]` repeat it's the total repeat count, inside one it's the current iteration index (0-based, i.e. count 3 gives indices 0,1,2, not 1,2,3). `%t` is a type-slot filled later by appending a type stroke (see the `@type` block). `%b` is the one-liner/block-body toggle — every `%b` in a single translation flips together, so adding or removing one changes whether the *other* `%b`-marked lines in that same template render as newlines or as nothing; this is why block-body data-structure literals near the bottom use literal `\n` instead of `%b` (they're always multi-line, never toggled). `%p` is a pattern-slot (used sparingly). `%[ sep | body %]` is a repeat construct where `sep` is a joiner never emitted after the last item — this is what backs the comma-separated-params entries (`STKWR-PB`, `STKWR-PT`) and the switch-case generator (`STKWR-FP`/`STKWR-FPD`). `%(EXPR)` computes a landing point from a linear expression in `d` (the repeat index) with no renumbering step — so `%(2d+1)` and `%(2d+2)` inside `STKWR-FP`'s repeat literally interleave case-labels and case-bodies as separate landable slots per iteration; getting this expression wrong silently misplaces cursor stops rather than erroring. Escape sequences `\n \t \{ \} \% \| \\ \`` must be used for literal versions of those characters inside templates.
 
-- `%0`-`%9`: cursor/tabstop landing points; plain (non-snippet) profile only
-  honors `%0`.
-- `%d`: emits the in-scope count as a literal digit — **not** a landing
-  point. Outside a `%[...%]` repeat it's the total item count (0 included);
-  inside a repeat it's the current iteration index. Same token, different
-  meaning depending on context.
-- `%t`: type-slot, filled when a type stroke (see below) is appended.
-- `%b`: body-break; all `%b` occurrences in one translation toggle together
-  as a single one-liner flag (flip one, flip all).
-- `%[ sep | body %]`: repeat construct; `sep` is a joiner never emitted
-  after the last item.
-- `%(EXPR)`: a computed landing point, linear in `d` (the repeat index) —
-  numbering is not auto-adjusted elsewhere; overlapping/conflicting computed
-  numbers are a parse error, not a silent merge.
-- Escapes: `\n \t \{ \} \% \| \\ \``.
+Directive semantics that aren't self-evident: `@fuse` (seen throughout the `STKWR-PBGS/*` function family) means the return-type stroke merges directly into the shape stroke, so a fused combo like `func / TPH-FLT` produces a fully-typed function with no intermediate type-less stroke required — omitting `@fuse` from a new function-shape entry would force an extra stroke for typing. `@type` marks an entry as a non-standalone type suffix, only valid appended after another stroke (e.g. after `STKWR-PBGS/-FLT`'s `%t` or after `STKWR-T`). `@arity N` (default 0) on a `@type` entry means the type stays non-terminal until N further type-strokes are appended as generic args — `Map`, `Record` (arity 2), and `Promise`, `Set`, `Array`, `Generator` (arity 1) all work this way; appending fewer than N leaves the emission incomplete. `@noarg` marks primitive types (`null`, `undefined`, `never`, `function`, etc.) that take no generic args and terminate immediately. `@literal` (used only on the data-structure family under `STKWR-RBGT/*`) means the block is emitted verbatim with no `%0`-style substitution — it's whole-class-body text output, and the doc-comment above that section notes the untyped/selector variant is expected to strip every `<T>` and `: T` from these literals, so if you edit one of these class bodies you must keep it structurally strippable to a generic-free version (Trie/TrieNode already has no `<T>` since it's string-keyed only).
 
-## Directives
+`STKWR-T` is the standalone type-emission escape hatch: it emits nothing by itself, but any type stroke appended after it (from the `@type` bank) writes that type free-standing, e.g. for casts/assertions — `STKWR-T/PR/STR` produces `Promise<string>`.
 
-- `@count KEYS`: which chord bank (e.g. `AOE`, `AO`) selects the repeat/slot
-  count for that entry.
-- `@arity N`: for `@type` entries, how many `%t` type-args must be appended
-  before the type stroke is "complete" (0 = terminal on first stroke).
-- `@fuse`: return-type stroke folds directly into the shape stroke instead of
-  requiring a separate untyped intermediate (e.g. `STKWR-PBGS/-FLT` + a type
-  stroke like `TPH` yields a typed function in one combined chord, not
-  function-then-retype).
-- `@multiline`: entry's `\n` are literal newlines, not subject to `%b`
-  toggling.
-- `@type` / `@noarg`: marks an entry as a non-standalone type fragment
-  appendable to `%t` slots; `@noarg` types (`TPHR` null, `TK` undefined,
-  `STPHR` never, `TP` function, `SR` void, `PW` boolean, `SKP`) never take
-  further type-args regardless of `@arity`.
-- `@literal`: whole-block emission with no template substitution — used for
-  the multi-class data-structure snippets.
-
-## Entry families
-
-Functions (`STKWR-PBGS` root + suffix): plain, arrow (`-R`/`-RD`), method
-(`-PL`), async (`-PB`), generator (`-D`), IIFE (`-F`), constructor
-(`-RBGT`), getter/setter (`-GT`/`-FT`) — all but the two arrow forms and
-plain root use `@fuse`. Params: `STKWR-PB` drops bare cursor slots into an
-existing `()` (no parens emitted); `STKWR-PT` is the typed sibling, each
-slot `name: type`.
-
-Control flow: if/else-if/else (`STKWR-F*`/`STKWR*F*
+Coupling: this file's grammar (fence syntax, all `%`-operators, all directive names/semantics) is normative for `src/parse.ts` — if parse.ts's operator handling or directive list drifts from what's described here, the two disagree and one must be fixed to match the other. There is no other schema document.
