@@ -1,0 +1,7 @@
+`prompts/` holds the two prompt templates that drive the context-summarization pipeline: one instructs an LLM to generate a leaf `.ctx` from a source file, the other instructs it to generate a directory `rollup.ctx` from child `.ctx`/`rollup.ctx` files. Depending on this directory means depending on the wording an LLM sees at generation time — there is no executable code here, so "editing" these files directly changes pipeline output quality and format, not behavior via logic.
+
+The two prompts must stay vocabulary-consistent — both use "context document," describe themselves as replacing an existing `.ctx`/`rollup.ctx`, and both enumerate a banned-phrase list and an anti-duplication rule. If one prompt's framing, tone, or structural rules (prose-only, no fixed schema, line-budget deference to `docs/SPEC.md`) changes, the other should be checked for drift. Each embeds a worked example that is calibration for length/register/density as much as illustration, so an edit to the surrounding rules should keep the example internally consistent with them.
+
+The two files are peers with no shared code, only shared contract: summarizer-leaf.md.ctx governs the base case (file → `.ctx`), summarizer-rollup.md.ctx governs the recursive case (children's `.ctx`/`rollup.ctx` → `rollup.ctx`). A typical edit to this subtree starts from a complaint about generated output (too verbose, duplicating child content, missing an invariant) and traces to a rule or example in the relevant prompt.
+
+intent.md is empty, so no divergence can be assessed against it.

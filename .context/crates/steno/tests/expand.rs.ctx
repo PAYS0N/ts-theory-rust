@@ -1,0 +1,13 @@
+Test suite for Pass A ("count expansion") of the steno crate — the stage that turns `@count`-annotated entries with count operators (`%d`, `%[...%]`, `%(expr)`, index brackets) into concrete per-count `ExpandedEntry` values via `expand_counts`/`expand_all`. It's a direct port of `test/expand.test.ts`; if expansion semantics change here, that TS file (and vice versa) needs the matching update.
+
+Three local helpers matter for reading any test: `show(&[Chunk]) -> String` renders a resolved chunk list back to source-like text and stringifies any *unresolved* count-operator chunk as `<UNRESOLVED:kind>` — its presence in an assertion means expansion left something unresolved, which is treated as a bug, not a valid state. `one(src) -> Option<Entry>` parses and requires exactly one entry (returns `None` otherwise). `at(&[ExpandedEntry], u32) -> Option<&ExpandedEntry>` finds the expansion whose `count` field matches.
+
+Key behavioral facts asserted here (load-bearing for anyone touching `expand_counts`/`expand_all`):
+- The `[%d]` index construct with `@count FPLT` fans out to exactly 16 entries (counts 0..15), merging bank keys into the stroke (e.g. count 1 adds `F`, count 15 adds `F,P,L,T` in bank order) while count 0 is the bare stroke with no merge.
+- `%(d+1)` inside `%[...%]` with 0-based iteration numbers landings starting at 1 (name `%0` stays reserved/unused); the repeat separator is a joiner, not a trailing delimiter (`(%1)` not `(%1,)`).
+- Switch-style bodies give each loop iteration a distinct landing pair via `%(2d+1)`/`%(2d+2)`.
+- A computed landing evaluating negative (e.g. `%(2d-1)` at iteration 0) is a hard error containing the substring `"< 0"`.
+- Entries with no count operator but `@count` set error with `"no count operator"`; entries with a count operator but no `@count` error with `"no @count"`.
+- Entries with neither count operators nor `@count` pass through as a single `ExpandedEntry` with `count: None`.
+
+The corpus tests (`corpus_entries`) read `dict.steno` from the repo root via `concat!(env!("CARGO_MANIFEST_DIR"), "/../../dict.steno")` — this path assumes the crate lives two directories below the repo root; moving the crate breaks these tests silently (they return `None`/panic on `unwrap`). These tests assert: expansion grows the entry count, a specific known stroke (`STKWROPB`, the "param" stroke at count 2) renders as `%0, %1` with no parens, and no expanded entry retains an unresolved `Chunk::Repeat`, `Chunk::Dcount`, or `Chunk::Computed` — i.e., Pass A must fully resolve every count operator across the real dictionary, not just the synthetic test cases.

@@ -1,0 +1,24 @@
+[package]
+name = "steno"
+version = "0.1.0"
+edition = "2024"
+description = "Compiler from steno-theory source (.steno) to Plover JSON dictionaries and LSP snippets."
+publish = false
+
+# Zero runtime dependencies is a project invariant (see .context/intent.md).
+[dependencies]
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "build-dict"
+path = "src/bin/build_dict.rs"
+
+[[bin]]
+name = "build-nvim"
+path = "src/bin/build_nvim.rs"
+
+[[bin]]
+name = "measure"
+path = "src/bin/measure.rs"

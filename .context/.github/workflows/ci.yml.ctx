@@ -1,0 +1,5 @@
+CI pipeline for GitHub Actions: defines the single `checks` job that runs on every push to `main` and on all pull requests. Runs on `ubuntu-latest`.
+
+Doesn't pin a Rust version itself — `rustup show` relies on `rust-toolchain.toml` at repo root to select the toolchain, so changing the pinned version there is what affects CI, not this file. Caches `~/.cargo/bin`, `~/.cargo/registry`, `~/.cargo/git`, and `target`, keyed on the hash of `**/Cargo.lock`; a `Cargo.lock` change invalidates the cache.
+
+Installs three cargo subcommands fresh each run (not cached): `cargo-deny`, `cargo-machete`, `cargo-modules` — all via `--locked`. These are dependencies of `scripts/ci.sh`, which is where the actual check logic lives; this file has no knowledge of what checks run, only that they're invoked through that one script. Adding a new check tool must be done in both places: install it here, invoke it in `scripts/ci.sh`.

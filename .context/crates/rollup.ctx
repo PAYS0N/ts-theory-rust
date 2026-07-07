@@ -1,0 +1,10 @@
+`crates/` is the Rust workspace root; the single member is `steno`, the
+`.steno` → Plover dictionary / LSP snippet compiler. Depending on this
+workspace means depending on `steno`'s public API and its two binaries —
+there is no other crate here to coordinate with, no shared workspace-level
+code, and no cross-crate coupling to track. Workspace-level changes
+(adding a crate, editing a shared `Cargo.toml` at this level) aren't
+reflected in the current tree; everything of substance lives one level
+down in `steno/`.
+
+No `intent.md` exists for this directory, so no divergence can be assessed.

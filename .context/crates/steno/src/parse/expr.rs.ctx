@@ -1,0 +1,9 @@
+Parses the `%(EXPR)` computed-landing syntax into a `super::Expr { a, b }` (representing `a*d + b`) for expressions linear in `d`: forms like `2d+1`, `-d`, `d-3`, bare `d`, or a bare integer. This is the only parser for that syntax; `Expr`'s two-field shape is defined in the parent `parse` module and consumed wherever `%(EXPR)` landings are evaluated.
+
+`pub(super) fn parse_expr(raw: &str) -> Option<Expr>` is the sole entry point. It strips *all* whitespace anywhere in the string (not just leading/trailing) before parsing, so `"2 d + 1"` and `"2d+1"` are equivalent. It splits on the first `'d'` via `split_once`, so a second `'d'` anywhere in the offset tail causes rejection (the offset parser requires pure signed digits after the sign, and `'d'` isn't a digit) — the function relies on this side effect rather than checking for a single `d` explicitly.
+
+Coefficient (`a_part`) rules: empty string means implicit coefficient `1` (bare `d`), `"-"` means `-1` (bare `-d`), anything else must pass `is_signed_digits` (optional single leading `-` then ≥1 ASCII digit) or the whole parse fails — there's no fallback to bare-integer parsing once a `d` was found.
+
+The offset (`b_part`, via `parse_offset`) is `0` if empty; otherwise the first character must be exactly `+` or `-`, and the remainder must be non-negative signed-digits — `parse_offset` explicitly re-checks `body.starts_with('-')` to reject double-negative offsets like `d--5`, since the leading char was already consumed as the sign.
+
+If no `'d'` is present, the whole trimmed string must be `is_signed_digits`, in which case it becomes `Expr { a: 0, b: <value> }` (a pure constant landing, no `d` dependence). Any input not matching one of these shapes returns `None`; the function never panics on malformed input.

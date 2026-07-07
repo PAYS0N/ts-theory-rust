@@ -1,0 +1,11 @@
+Parses and renders one steno sub-stroke (the portion of a stroke between `/` separators) into/from a bank-partitioned key set — this is the core stroke-syntax layer other stroke-handling code builds on.
+
+Note `R` appears in both `LEFT_ORDER` and `RIGHT_ORDER` (left `R` vs right `-R`); disambiguation relies entirely on position relative to the hyphen (or, without a hyphen, on the `Phase` scan order: left → mid → right). `KeySet` is order-insensitive by design — `render_stroke` always re-sorts to canonical bank order via `LEFT_ORDER`/`MID_ORDER`/`RIGHT_ORDER`, so insertion order and duplicates never affect output.
+
+`parse_stroke(s: &str) -> Result<StrokeKeys, StrokeError>` is the main entry point; it strips a leading `#` (number bar), then dispatches on whether a `-` is present to `parse_hyphenated` or `parse_unhyphenated`. A second hyphen is an error. In hyphenated form, everything before `-` must be left/mid keys and everything after must be right-bank. In hyphenated form, a mid-only key like `A` before the hyphen with no right-bank keys after still round-trips without the hyphen on render (see below).
+
+`parse_unhyphenated` uses a 3-phase state machine (`Phase::Left → Mid → Right`) that never goes backward: once a mid key is seen, no more left keys are legal; once a right key is seen, no more mid keys are legal (this ordering constraint is the only thing enforced — banks aren't hyphen-delimited here).
+
+`render_stroke` has one asymmetry to know: if there are right-bank keys but no mid keys, it always re-inserts the hyphen (`"{left}-{right}"`) — otherwise it concatenates with no hyphen (`"{left}{mid}{right}"`). This means round-tripping `parse_stroke` → `render_stroke` is not always identity: a hyphenated input with mid keys present (e.g. `"ST-PLT"` isn't ambiguous, but something like `"SA-PL"` with a mid key before the hyphen) renders without the hyphen if it's unambiguous — callers relying on exact string preservation should not assume that.
+
+Depends on `crate::error::StrokeError` for all failure cases; no external crates.

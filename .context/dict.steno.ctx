@@ -1,0 +1,61 @@
+# dict.steno — Plover dictionary source, parsed by src/parse.ts
+
+Strict, machine-parsed source for a Plover steno dictionary (TS/JS coding
+shorthand). This is the file to edit when adding/changing a stroke-to-snippet
+mapping; it replaces the older informal `snippets.txt`. Every entry is a
+fenced block (` ```` `) whose opening line is the stroke (or `ROOT/SELECTOR`
+for two-stroke families), whose body is the template, and which may be
+followed by bare directive lines (`@count`, `@arity`, `@multiline`, `@fuse`,
+`@type`, `@noarg`, `@literal`) that attach to the entry immediately above.
+`#`/`//` lines are comments. **The exact grammar of directives and template
+operators below is re-implemented in src/parse.ts — changing the meaning of
+any operator or directive here without updating that parser breaks every
+entry in the file.**
+
+## Template operator semantics (load-bearing, easy to get wrong)
+
+- `%0`-`%9`: cursor/tabstop landing points; plain (non-snippet) profile only
+  honors `%0`.
+- `%d`: emits the in-scope count as a literal digit — **not** a landing
+  point. Outside a `%[...%]` repeat it's the total item count (0 included);
+  inside a repeat it's the current iteration index. Same token, different
+  meaning depending on context.
+- `%t`: type-slot, filled when a type stroke (see below) is appended.
+- `%b`: body-break; all `%b` occurrences in one translation toggle together
+  as a single one-liner flag (flip one, flip all).
+- `%[ sep | body %]`: repeat construct; `sep` is a joiner never emitted
+  after the last item.
+- `%(EXPR)`: a computed landing point, linear in `d` (the repeat index) —
+  numbering is not auto-adjusted elsewhere; overlapping/conflicting computed
+  numbers are a parse error, not a silent merge.
+- Escapes: `\n \t \{ \} \% \| \\ \``.
+
+## Directives
+
+- `@count KEYS`: which chord bank (e.g. `AOE`, `AO`) selects the repeat/slot
+  count for that entry.
+- `@arity N`: for `@type` entries, how many `%t` type-args must be appended
+  before the type stroke is "complete" (0 = terminal on first stroke).
+- `@fuse`: return-type stroke folds directly into the shape stroke instead of
+  requiring a separate untyped intermediate (e.g. `STKWR-PBGS/-FLT` + a type
+  stroke like `TPH` yields a typed function in one combined chord, not
+  function-then-retype).
+- `@multiline`: entry's `\n` are literal newlines, not subject to `%b`
+  toggling.
+- `@type` / `@noarg`: marks an entry as a non-standalone type fragment
+  appendable to `%t` slots; `@noarg` types (`TPHR` null, `TK` undefined,
+  `STPHR` never, `TP` function, `SR` void, `PW` boolean, `SKP`) never take
+  further type-args regardless of `@arity`.
+- `@literal`: whole-block emission with no template substitution — used for
+  the multi-class data-structure snippets.
+
+## Entry families
+
+Functions (`STKWR-PBGS` root + suffix): plain, arrow (`-R`/`-RD`), method
+(`-PL`), async (`-PB`), generator (`-D`), IIFE (`-F`), constructor
+(`-RBGT`), getter/setter (`-GT`/`-FT`) — all but the two arrow forms and
+plain root use `@fuse`. Params: `STKWR-PB` drops bare cursor slots into an
+existing `()` (no parens emitted); `STKWR-PT` is the typed sibling, each
+slot `name: type`.
+
+Control flow: if/else-if/else (`STKWR-F*`/`STKWR*F*

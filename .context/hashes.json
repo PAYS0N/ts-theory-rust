@@ -1,0 +1,14 @@
+{
+  "hash": "14dc0c17a752b52122a5b1250269829a5233c6001f7d029d671ab21c94025f0c",
+  "children": {
+    ".github": "d:47bde68bac88f11059512fe35e12f1f9ff2427c1cb45f2ea8c097cd165ba12df",
+    "Cargo.lock": "f:e1f2504280f1721360f6cf43a3ac9c09448fb866d4e1465ef5f9aee30dee4f37",
+    "README.md": "f:65f573de6db6e41411c05deb1de5ac73a8de6825b7728a8e178a9174a63f9af9",
+    "crates": "d:ebddc98f9e4e92bb89b0a58f268d85b7158fa0316f4f72482243ed4c4b363bec",
+    "dict.steno": "f:b83e390bf030a264d1f83cf5af90455ae683bda698dbc021bc9618ce26084e9b",
+    "docs": "d:c14c5a725b5636f88adbab828a648206879521b107e72751e1eb31e2fe21259f",
+    "nvim": "d:3de55af8369246559eb4ac189c7ad4a72b47147dceb723d9b6c4cbdd3c9c7cb7",
+    "prompts": "d:aee6f315e57c9ccb33830a1901e3c7f1746d1763eca0cb85b0e80c56e9151fde",
+    "scripts": "d:4df38876d8b4a6d9c373f376c4f3b01c10ba6c1c772b6e43c50eefd25eefef49"
+  }
+}

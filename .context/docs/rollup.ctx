@@ -1,0 +1,30 @@
+`docs/` holds the normative reference material for `crates/steno` — the
+`.steno` source-format spec, the compile-pipeline description, and the
+TS→Rust porting record. Nothing here is compiled; these files are the
+contract that the parser, expander, renderer, and test corpus must stay
+consistent with, and are what an editor should update *first* when a
+pass boundary, directive, or corpus fixture changes, then verify against
+the actual code.
+
+The three files describe adjacent slices of the same pipeline and must
+stay mutually consistent when one changes: `steno-format.md` is the
+authority on source syntax (fences, directives, template operators,
+stroke key order) and explicitly cedes ground truth to the parser code
+when they disagree; `pipeline.md` picks up immediately after parsing and
+owns pass ordering, the `Behaviors`/editor model, and the error
+taxonomy, and explicitly defers back to `steno-format.md` for expansion-
+time semantics of `%d`/`%[…%]`/`%(…)` and `@literal`. Both agree on the
+seven directives and on `@fuse`'s effect of merging the entry's last
+stroke into the first appended type stroke — a change to `@fuse`
+semantics in code must be reflected in both docs. `porting-notes.md` is
+the arbiter for corpus/test divergences from the TS reference (the
+`STKWR-FB` fence fix, `STKWR-LT`'s repurposing) — its resolutions are
+precedent, not open questions, and reverting `dict.steno` or
+`blocks.rs`'s `@literal` emitter to "match" the old TS behavior would
+silently reopen closed divergences.
+
+Any change to pass boundaries, directive semantics, `Behaviors` presets,
+or error types in `crates/steno/src` needs a matching edit in
+`pipeline.md` and/or `steno-format.md`; any change to `dict.steno`'s
+`STKWR-FB`/`STKWR-LT` entries needs a check against `porting-notes.md`'s
+documented resolutions before landing.

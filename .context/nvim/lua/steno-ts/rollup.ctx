@@ -1,0 +1,7 @@
+`nvim/lua/steno-ts/` is a single-file Neovim plugin: the runtime consumer of the TypeScript compiler's two JSON build artifacts (`out/plover-keys.json`, consumed indirectly via Plover, and `out/snippets.json`, read directly). Depending on this directory gets you one function, `M.setup(opts)`, which wires up automatic snippet expansion of sentinel-wrapped stenography tokens as they're typed into insert-mode buffers.
+
+There is only one file, `init.lua`, so there is no cross-file coupling within this directory — the real coupling is external, to `src/snippet.ts`'s `SENTINEL_OPEN`/`SENTINEL_CLOSE` constants (must match this file's `OPEN`/`CLOSE` of `"@@"`) and to the JSON schemas of the two `out/*.json` build products. Any change to the sentinel format, the snippet-body JSON shape, or the token grammar Javelin/Plover emits must be mirrored here or expansion silently stops matching.
+
+A typical change starts either in `token_before_cursor()` (token grammar/detection) or in `config`/`M.setup` (file paths, filetype gating). The subtree has no build step of its own — it's pure Lua consumed at Neovim startup — and depends entirely on the TS compiler elsewhere in the repo having already produced valid `out/snippets.json` before `setup()` runs.
+
+No intent.md is present for this directory.

@@ -1,0 +1,8 @@
+{
+  "hash": "71b3e773cc9816d094db31b0434b7b0a2d76d6c4f301105175f7e9cba69b0988",
+  "children": {
+    "build_dict.rs": "f:cdcd3be87e9c31ad2a4c09749b9895959d6c5abd9ab04b0d2325cf8f8a41ce1e",
+    "build_nvim.rs": "f:80862e669e46272d2342a907675cbdfd1d288ef6719ae23afaa63a480b8588a7",
+    "measure.rs": "f:5c0872ee3311c30726d0468076449b2dcf104d8ce8d7ced36bd9b1a8b5086cb4"
+  }
+}

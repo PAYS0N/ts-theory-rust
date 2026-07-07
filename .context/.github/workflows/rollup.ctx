@@ -1,0 +1,5 @@
+.github/workflows/ is the GitHub Actions entry point for CI — it's the only thing that runs on push-to-main and pull requests, and its job is purely to prepare an environment (checkout, toolchain via `rust-toolchain.toml`, cargo cache, three extra cargo subcommands) and hand off to `scripts/ci.sh`, which holds all actual check logic. Depending on this directory gets you nothing directly; it's infrastructure, not an API — the real contract is with `scripts/ci.sh` and `rust-toolchain.toml` at the repo root.
+
+Only one file, ci.yml, defines the one job. Anyone adding a new CI check tool must edit two places outside this reasoning boundary in lockstep: install the tool in ci.yml, invoke it in scripts/ci.sh — a mismatch here silently no-ops the new check rather than failing loudly.
+
+No intent.md exists for this directory.

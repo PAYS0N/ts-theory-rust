@@ -1,0 +1,14 @@
+`.github/` is the repo's CI trigger point, containing only the
+`workflows/` subtree. It has no direct contract of its own — everything
+about behavior, environment setup, and check logic lives in
+`workflows/rollup.ctx` and, beyond that, in `scripts/ci.sh` and
+`rust-toolchain.toml` at the repo root. Depending on `.github/` gets a
+downstream reader nothing; it's invoked by GitHub on push/PR, not
+imported or called by other code.
+
+There is nothing to couple across children since `workflows/` is the only
+child, so no cross-file invariant exists at this level beyond what's
+already documented there.
+
+No intent.md exists for this directory, so there is nothing to check for
+divergence.

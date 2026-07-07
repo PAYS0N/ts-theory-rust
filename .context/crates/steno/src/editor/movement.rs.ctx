@@ -1,0 +1,9 @@
+Converts a target character offset in a buffer into a sequence of editor key events (`Up`, `End`, `Left`) that move the cursor there from a known "resting" offset, without needing to know the buffer's indentation — used so replay/rendering of edits can reposition the cursor using only relative keystrokes.
+
+The core assumption, stated in the doc comment and enforced by `movement_events`, is that the cursor only ever moves *backward* toward `%0` (start of buffer): `to` must be on the same line as `from` or above it, and if on the same line, at or left of `from`'s column. Violating this returns `Err(RenderError)` rather than panicking, but per the comment this branch is dead code in practice — callers never trigger it. Anyone changing call sites needs to preserve "cursor only walks backward" or these errors will start firing.
+
+`pos(lines, off)` maps a flat character offset into a `(line, col)` `Pos` by walking `lines` and subtracting `line.len() + 1` per line (the `+1` accounts for the `\n` join character) — if `off` overflows the buffer, it clamps to the last line's end rather than erroring.
+
+Movement generation branches on same-line vs. cross-line: `same_line` just emits `Left`×(col diff). `cross_line` emits `Up`×(line diff) then `End` (to jump to true end-of-line regardless of soft-wrap) then `Left`×(line_len - target_col) to walk back from the end. `push_left` is a shared helper that omits the `Left` event entirely when the count is 0, so callers don't need to special-case no-op moves.
+
+`Event` and `KeyName` come from the parent `editor` module (`super::{Event, KeyName}`) — this file only constructs key-repeat events, it doesn't interpret or dispatch them.

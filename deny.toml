@@ -1,0 +1,44 @@
+# cargo-deny configuration. License allowlist is intentionally narrow;
+# expand only with deliberate review.
+
+[graph]
+all-features = true
+
+[advisories]
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+yanked = "deny"
+ignore = []
+
+[licenses]
+# The crate is zero-dependency by invariant, so no license is ever encountered.
+# The allowlist is a deliberate policy for when a dependency is added; don't fail
+# the check just because its entries are (currently) unused.
+unused-allowed-license = "allow"
+# `steno` is a private, unpublished workspace crate (publish = false) with no
+# license field; skip the license check for our own private crates.
+private = { ignore = true }
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+]
+confidence-threshold = 0.93
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+highlight = "all"
+deny = []
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

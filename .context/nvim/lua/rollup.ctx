@@ -1,0 +1,13 @@
+`nvim/lua/` is the Neovim runtime-configuration root: a single plugin
+subtree that Neovim's Lua host loads at startup. Depending on this
+directory gets you whatever `steno-ts/` exposes; there is no other code
+here — no top-level Lua files, no other plugin subdirectories.
+
+There is no cross-file or cross-subdirectory coupling to describe beyond
+what already lives in `steno-ts/rollup.ctx`: that one child holds the
+entire contract (sentinel format, JSON schema dependency on the TS
+compiler's build output, `M.setup(opts)` entry point). A change anywhere
+in this subtree starts and ends inside `steno-ts/`.
+
+No intent.md exists for this directory, so there is nothing to check for
+divergence.
