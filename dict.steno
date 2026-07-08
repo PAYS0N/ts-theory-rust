@@ -19,6 +19,7 @@
 
 
 
+## functions
 # Functions carry one inline param; more come from STKWR-PB. @fuse merges the
 # return type into the shape stroke, so `func / TPH-FLT` -> a number function
 # directly (no required type-less intermediate stroke).
@@ -26,62 +27,78 @@
 ````STKWR-PBGS
 pre-func
 ````
+###deFauLT
 ````STKWR-PBGS/-FLT
 function %0(%1): %t {%b%2}
 ````
 @fuse
+###aRrow
 ````STKWR-PBGS/-R
 (%0) => %1
 ````
+###aRrow with newline
 ````STKWR-PBGS/*R
 (%0) => {
 	return%1
 }
 ````
+###aRrow Typed
 ````STKWR-PBGS/-RT
 (%0): %t => %1
 ````
+###aRrow Typed with newline
 ````STKWR-PBGS/*RT
 (%0): %t => {
 	return%1
 }
 ````
+###Method
 ````STKWR-PBGS/-PL
 %0(%1): %t {%b%2}
 ````
 @fuse
+###asyNc
 ````STKWR-PBGS/-PB
 async function %0(%1): Promise<%t> {%b%2}
 ````
 @fuse
+###yeilD
 ````STKWR-PBGS/-D
 function* %0(%1): Generator<%t> {%b%2}
 ````
 @fuse
+###iiFe
 ````STKWR-PBGS/-F
 (function %0(%1): %t {%b%2})(%3);
 ````
 @fuse
+###consRuCTor
 ````STKWR-PBGS/-RBGT
 constructor(%0) {%b%1}
 ````
 @fuse
+###GeT
 ````STKWR-PBGS/-GT
 get %0(): %t {%b%1}
 ````
 @fuse
+###SeT
 ````STKWR-PBGS/-FT
 set %0(%1) {%b%2}
 ````
 @fuse
 
+## params
+
 # params: drop bare comma-separated cursor slots inside an existing () — no parens.
+### bare param
 ````STKWR-PB
 %[, |%(d)%]
 ````
 @count AOE
 
 # typed params (<=3 via the AO bank): each slot is `name: type`, type appended per slot.
+### typed param
 ````STKWR-PT
 %[, |%(d): %t%]
 ````
@@ -93,142 +110,170 @@ set %0(%1) {%b%2}
 # if/else control
 
 
-#iF
+## if
+###iF
 ````STKWR-F
 if(%0) {%b%1}
 ````
+###if noT
 ````STKWR-FT
 if(!%0) {%b%1}
 ````
+###if equal to Number
 ````STKWR-FPB
 if(%0 === %d) {%b%1}
 ````
 @count AOE
+###if false
 ````STKWR-FGT
 if(%0 === false) {%b%1}
 ````
+###if undefined
 ````STKWR-FTS
 if(%0 === undefined) {%b%1}
 ````
+###if null
 ````STKWR-FGTS
 if(%0 === null) {%b%1}
 ````
+###if eQuaL
 ````STKWR-FBLG
 if(%0 === %1) {%b%2}
 ````
 
 
-#else iF
+## else if
 
+###else iF
 ````STKWR*F
 else if(%0) {%b%1}
 ````
+###else if noT
 ````STKWR*FT
 else if(!%0) {%b%1}
 ````
+###else if equal to Number
 ````STKWR*FPB
 else if(%0 === %d) {%b%1}
 ````
 @count AOE
+###else if false
 ````STKWR*FRT
 else if(%0 === false) {%b%1}
 ````
+###else if undefined
 ````STKWR*FBT
 else if(%0 === undefined) {%b%1}
 ````
+###else if null
 ````STKWR*FRBT
 else if(%0 === null) {%b%1}
 ````
+###else if eQuaL
 ````STKWR*FBLG
 else if(%0 === %1) {%b%2}
 ````
-````STKWR*FZ
-else if(%0 === 0) {%b%1}
-````
 
 
-#eLSe
+## else
 
+###eLSe
 ````STKWR-LS
 else {%b%0}
 ````
 
 
-#TeRNary
+## ternary
 
 ````STKWR-RPBT
 %0 ? %1 : %2
 ````
 
 
-#control loops
+## for loop
 
-
+###FoR
 ````STKWR-FR
 for(let i = 0; i < %0; i++){%b%1}
 ````
-````STKWR-FRBGS
+###FoR eNTrieS
+````STKWR-FRPBTS
 for(let [index, %0] of %1.entries()){%b%1}
 ````
+###FoR Negative
 ````STKWR-FRPB
 for(let i = %0; i >= 0; i--){%b%1}
 ````
+###FoR eMpTy
 ````STKWR-FRPLT
 for( %0 ; %1 ; %2 ){%b%3}
 ````
+###FoR of
 ````STKWR-FRD
 for(const %0 of %1){%b%2}
 ````
+###FoR in
 ````STKWR-FRZ
 for(const key%0 in %1){%b%2}
 ````
+
+## while loop
+
+###whiLe
 ````STKWR*L
 while(%0) {%b}
 ````
+###whiLe i uP
 ````STKWR*PL
 let i: number = 0
 while(i++ < %0) {%b%1}
 ````
+###Do whiLe
 ````STKWR*LD
 do {%b%1} while (%0)
 ````
 
 
 
-# try/catch/finally
+## try/catch/finally
 
+###TRy catch
 ````STKWR-RT
 try {%b%0} catch (error) {%b%1}
 ````
+###TRy catch finally
 ````STKWR-RTD
 try {%b%0} catch (error) {%b%1} finally {%b%2}
 ````
+###TRy Finally
 ````STKWR-FRT
 try {%b%0} finally {%b%1}
 ````
+###FinaLly
 ````STKWR-FL
 finally {%b%0}
 ````
 
 
 
-# switCH
+## switch
 
 
+###switCH
 ````STKWR-FP
 switch(%0) {%b%[case %(2d+1): \n%(2d+2)\nbreak;\n%]}
 ````
 @count AOE
 @multiline
 
-# switCH Default
+###switCH Default
 ````STKWR-FPD
 switch(%0) {%b%[case %(2d+1): \n%(2d+2)\nbreak;\n%]default:\n%(2d+1)}
 ````
 @count AOE
 @multiline
 
-#switCH CaSe
+###switCH CaSe
 ````STKWR-FPBGS
 case %0:
 	%1
@@ -237,17 +282,21 @@ case %0:
 
 
 
-# declarations
+## declarations
 
+###Let Typed
 ````STKWR-LT
 let %0: %t = %1
 ````
+###ConsT Typed
 ````STKWR-BGT
 const %0: %t = %1
 ````
+###Let untyped
 ````STKWR-L
 let %0 = %1
 ````
+###ConsT untyped
 ````STKWR-BG
 const %0 = %1
 ````
@@ -258,28 +307,19 @@ const %0 = %1
 
 
 
-# console LoG
+## console.log
 
 ````STKWR-LG
 console.log(%0)
 ````
 
-# throw an eRRor
+## throw
 ````STKWR-R
 throw new Error(%0)
 ````
 
 
-
-# .leNGth
-
-````STKWR-PBG
-.length
-````
-
-
-
-# classes
+## classes
 
 
 ````STKWR-BLGS
@@ -297,6 +337,7 @@ this.
 
 
 
+## destructuring patterns
 // Standalone destructuring patterns — count bank picks slot count; cursor -> slot 1.
 // Drop in after a no-type let/const, or into a param list.
 ````STKWR-BGSD
@@ -314,7 +355,7 @@ this.
 
 
 
-# indeX
+## index
 ````STKWR-BGS
 [%d]%0
 ````
@@ -325,12 +366,17 @@ this.
 // 'D' suffix = block body, ALWAYS multi-line (\n is literal, not %b — the only
 // reason to pick the block form is to want multiple lines).
 
-
-//array MeTHods
-
+## methods
 ````STKWR*PLT
 pre-method
 ````
+````STKWR-PBG
+.length
+````
+
+
+# array methods
+
 ````STKWR*PLT/R-PL
 .map((%0) => %1)
 ````
@@ -402,7 +448,7 @@ pre-method
 ````
 
 
-// string methods
+# string methods
 
 ````STKWR*PLT/STR-RPLT
 .trim()
@@ -471,7 +517,7 @@ pre-method
 .toString()
 ````
 
-// math methods
+# math methods
 ````STKWR*PLT/PH-BS
 Math.abs(%0)
 ````
@@ -594,6 +640,7 @@ Generator<%t>
 @type
 @arity 1
 
+## type emitter
 // A standalone type emitter: stroke STKWR-T, then append any type to write it
 // anywhere (assertions, casts, free-standing annotations). Base emits nothing;
 // STKWR-T/TPH -> number, STKWR-T/PR/STR -> Promise<string>, STKWR-T/SKP -> free.
@@ -602,6 +649,7 @@ Generator<%t>
 ````
 
 
+## custom functions
 // Custom functions
 
 ````STKWR-FB
@@ -615,6 +663,7 @@ function fibonacci(n) {
 ````
 
 
+## data structures
 // =====================================================================
 // DATA STRUCTURES (§4k): static root + selector; whole-structure emission.
 // Shown TYPED (generic <T>). The untyped selector-variant strips every <T> and

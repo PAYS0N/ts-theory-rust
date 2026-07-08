@@ -49,6 +49,7 @@ fn terminal_entry(stroke: &str, template_src: &str) -> Option<TypedEntry> {
         terminal: true,
         one_liner: false,
         count: None,
+        type_label: None,
         source,
     })
 }

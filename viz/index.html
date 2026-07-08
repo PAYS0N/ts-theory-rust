@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>steno stroke tree</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #1e1f24;
+    --panel: #26282f;
+    --border: #3a3d46;
+    --text: #e6e6e6;
+    --dim: #9aa0ab;
+    --accent: #6ea8ff;
+    --mono: "SF Mono", Menlo, Consolas, "Cascadia Code", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  #rows {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .row {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+  .cat-row { padding-top: 0; }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 12px;
+    max-width: 320px;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip.active { border-color: var(--accent); background: #2c3542; }
+  .chip-label {
+    color: var(--text);
+    white-space: pre-wrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 3.6em;
+  }
+
+  .preview {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .preview .full-stroke {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+    margin-bottom: 10px;
+  }
+  .preview .description {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .preview pre {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .axis-toggle, .variant-toggle {
+    margin-bottom: 12px;
+  }
+  .axis-toggle .axis-label {
+    display: block;
+    color: var(--dim);
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .toggle-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 6px;
+  }
+  .toggle-btn.active {
+    background: var(--accent);
+    color: #10131a;
+    border-color: var(--accent);
+  }
+
+  #empty {
+    color: var(--dim);
+    font-size: 13px;
+    padding: 16px 0;
+  }
+</style>
+</head>
+<body>
+  <div id="rows"><div id="empty">Loading…</div></div>
+
+<script>
+"use strict";
+
+let DATA = null;
+// Selected category index, or null.
+let activeCategory = null;
+// Explicitly clicked node keys, root to leaf. Singleton-axis auto-chained
+// nodes are never stored here — they're recomputed each render.
+let path = [];
+// One global multi-line/one-liner preference (lineflag.rs: the choice is
+// per whole construct, never per intermediate stroke).
+let oneLinerActive = false;
+// Per-axis-node selected option key, so a choice sticks as rows above and
+// below it re-render.
+const axisSelection = new Map();
+// The U-augmented first stroke segment for the currently reached terminal
+// (if any), recomputed once per render — see `displayKey`.
+let currentOneLinerRoot = null;
+
+fetch("../out/viz-data.json")
+  .then((r) => {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  })
+  .then((data) => {
+    DATA = data;
+    render();
+  })
+  .catch((err) => {
+    document.getElementById("rows").innerHTML = "";
+    document.getElementById("rows").appendChild(
+      renderEmpty(
+        "Failed to load out/viz-data.json — run `target/debug/viz-data` " +
+          "then serve the repo root over http:// (fetch can't read file://). " +
+          "(" + err.message + ")"
+      )
+    );
+  });
+
+// The option currently chosen for an axis node, defaulting to (and
+// remembering) its first option.
+function selectedOptionKey(axisKey, axis) {
+  if (!axisSelection.has(axisKey)) {
+    axisSelection.set(axisKey, axis.options[0].key);
+  }
+  return axisSelection.get(axisKey);
+}
+
+// Resolve a node key to the one whose preview/children should actually be
+// shown: itself, unless it's an axis node, in which case its selected
+// option's key (a real stroke, never itself an axis node).
+function resolve(key) {
+  const node = DATA.nodes[key];
+  if (node && node.axis) {
+    const optKey = selectedOptionKey(key, node.axis);
+    return { key: optKey, node: DATA.nodes[optKey] };
+  }
+  return { key, node };
+}
+
+// True when there's exactly one choice — the point where navigation
+// auto-chains into the next row without a click, regardless of whether
+// that sole child is a plain stroke or an axis node.
+function isSingleton(children) {
+  return children.length === 1;
+}
+
+// Walk from the active category's roots through `path`, auto-chaining any
+// singleton-axis child. Self-heals `path` if it no longer matches the
+// current tree shape (an upstream axis change invalidated it) by
+// truncating it in place — Q1's "truncate and collapse".
+function buildRows() {
+  const rows = [];
+  if (activeCategory === null) return { rows, trailingChildren: [] };
+  let currentChildren = DATA.categories[activeCategory].roots;
+  let realIdx = 0;
+  for (;;) {
+    let key;
+    let real;
+    if (isSingleton(currentChildren)) {
+      key = currentChildren[0];
+      real = false;
+    } else if (realIdx < path.length && currentChildren.includes(path[realIdx])) {
+      key = path[realIdx];
+      real = true;
+      realIdx += 1;
+    } else {
+      if (path.length > realIdx) path.length = realIdx;
+      break;
+    }
+    const raw = DATA.nodes[key];
+    const resolved = resolve(key);
+    rows.push({ key, raw, resolved, real, realCountAfter: realIdx });
+    currentChildren = resolved.node.children;
+  }
+  return { rows, trailingChildren: currentChildren };
+}
+
+// Substitute the one-liner-augmented first stroke segment into `key`'s
+// display form, when one-liner is active and the current path has reached
+// a node that carries it.
+function displayKey(key) {
+  if (!oneLinerActive || !currentOneLinerRoot) return key;
+  const idx = key.indexOf("/");
+  return idx === -1 ? currentOneLinerRoot : currentOneLinerRoot + key.slice(idx);
+}
+
+// A children chip's label: the description comment if present, else a
+// short snippet derived from the rendered text, else the raw stroke
+// segment as a last resort.
+function chipLabel(key, node) {
+  if (node.description) return node.description;
+  const src = node.multiLine ?? node.oneLiner ?? "";
+  let s = src.startsWith("{^}") ? src.slice(3) : src;
+  const nl = s.indexOf("\n");
+  if (nl !== -1) s = s.slice(0, nl);
+  s = s.trim();
+  if (!s) return key.includes("/") ? key.slice(key.lastIndexOf("/") + 1) : key;
+  return s.length > 40 ? s.slice(0, 40) + "…" : s;
+}
+
+function renderEmpty(text) {
+  const el = document.createElement("div");
+  el.id = "empty";
+  el.textContent = text;
+  return el;
+}
+
+function renderCategoryChips() {
+  const wrap = document.createElement("div");
+  wrap.className = "row cat-row";
+  const chips = document.createElement("div");
+  chips.className = "chip-row";
+  DATA.categories.forEach((cat, i) => {
+    const chip = document.createElement("div");
+    chip.className = "chip" + (i === activeCategory ? " active" : "");
+    const label = document.createElement("div");
+    label.className = "chip-label";
+    label.textContent = cat.label + " (" + cat.roots.length + ")";
+    chip.appendChild(label);
+    chip.onclick = () => {
+      if (i === activeCategory) return;
+      activeCategory = i;
+      path = [];
+      oneLinerActive = false;
+      render();
+    };
+    chips.appendChild(chip);
+  });
+  wrap.appendChild(chips);
+  return wrap;
+}
+
+// A row's next-choice chips, sourced from `children`. `nextKey` (if any)
+// is highlighted as the already-committed pick. Clicking any chip
+// truncates `path` to `sliceIdx` and appends the clicked key.
+function renderChildrenChips(children, nextKey, sliceIdx) {
+  const wrap = document.createElement("div");
+  wrap.className = "chip-row";
+  children
+    .slice()
+    .sort()
+    .forEach((key) => {
+      const node = DATA.nodes[key];
+      const chip = document.createElement("div");
+      chip.className = "chip" + (key === nextKey ? " active" : "");
+      const label = document.createElement("div");
+      label.className = "chip-label";
+      label.textContent = chipLabel(key, node);
+      chip.appendChild(label);
+      chip.onclick = () => {
+        path = path.slice(0, sliceIdx).concat([key]);
+        render();
+      };
+      wrap.appendChild(chip);
+    });
+  return wrap;
+}
+
+// An axis's selector control: one button per option, the currently
+// selected one highlighted.
+function renderAxisSelector(axisKey, axis) {
+  const wrap = document.createElement("div");
+  wrap.className = "axis-toggle";
+  const label = document.createElement("span");
+  label.className = "axis-label";
+  label.textContent = axis.kind === "count" ? "Count:" : "Type:";
+  wrap.appendChild(label);
+  const selected = selectedOptionKey(axisKey, axis);
+  axis.options.forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.textContent = opt.label;
+    btn.className = "toggle-btn" + (opt.key === selected ? " active" : "");
+    btn.onclick = () => {
+      axisSelection.set(axisKey, opt.key);
+      render();
+    };
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+
+function renderOneLinerToggle() {
+  const wrap = document.createElement("div");
+  wrap.className = "variant-toggle";
+  ["multiLine", "oneLiner"].forEach((v) => {
+    const btn = document.createElement("button");
+    btn.textContent = v === "multiLine" ? "multi-line" : "one-liner";
+    const active = (v === "oneLiner") === oneLinerActive;
+    btn.className = "toggle-btn" + (active ? " active" : "");
+    btn.onclick = () => {
+      oneLinerActive = v === "oneLiner";
+      render();
+    };
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+
+// The variant field to show for `node`: whichever of multiLine/oneLiner is
+// actually populated, preferring the active global choice when both are.
+function variantKeyFor(node) {
+  const hasBoth = node.multiLine !== null && node.oneLiner !== null;
+  if (hasBoth) return oneLinerActive ? "oneLiner" : "multiLine";
+  if (node.multiLine !== null) return "multiLine";
+  if (node.oneLiner !== null) return "oneLiner";
+  return null;
+}
+
+function renderPreview(resolved) {
+  const box = document.createElement("div");
+  box.className = "preview";
+
+  const header = document.createElement("div");
+  header.className = "full-stroke";
+  header.textContent =
+    displayKey(resolved.key) + (resolved.node.terminal ? "  (terminal)" : "  (partial)");
+  box.appendChild(header);
+
+  if (resolved.node.description) {
+    const desc = document.createElement("div");
+    desc.className = "description";
+    desc.textContent = resolved.node.description;
+    box.appendChild(desc);
+  }
+
+  const variantKey = variantKeyFor(resolved.node);
+  const text = variantKey ? resolved.node[variantKey] : null;
+  if (text) {
+    const pre = document.createElement("pre");
+    pre.textContent = text;
+    box.appendChild(pre);
+  }
+  return box;
+}
+
+// One settled row: axis selector (if this row's own node is an axis), the
+// one-liner toggle (only at the first eligible row), the preview, then
+// this row's own next-choice chips.
+function renderRow(row, nextKey, canShowToggle) {
+  const el = document.createElement("div");
+  el.className = "row";
+  let usedToggle = false;
+
+  if (row.raw && row.raw.axis && row.raw.axis.options.length > 1) {
+    el.appendChild(renderAxisSelector(row.key, row.raw.axis));
+  }
+
+  const node = row.resolved.node;
+  const hasBoth = node.multiLine !== null && node.oneLiner !== null;
+  if (canShowToggle && hasBoth) {
+    el.appendChild(renderOneLinerToggle());
+    usedToggle = true;
+  }
+
+  el.appendChild(renderPreview(row.resolved));
+
+  const kids = node.children;
+  if (kids.length > 0 && !isSingleton(kids)) {
+    el.appendChild(renderChildrenChips(kids, nextKey, row.realCountAfter));
+  }
+
+  return { el, usedToggle };
+}
+
+function render() {
+  const container = document.getElementById("rows");
+  container.innerHTML = "";
+  if (!DATA) return;
+
+  container.appendChild(renderCategoryChips());
+
+  if (activeCategory === null) {
+    container.appendChild(renderEmpty("Select a category to begin."));
+    return;
+  }
+
+  const { rows, trailingChildren } = buildRows();
+  const withRoot = rows.find((r) => r.resolved.node.oneLinerRoot);
+  currentOneLinerRoot = withRoot ? withRoot.resolved.node.oneLinerRoot : null;
+
+  // Root-level chips have no preceding row to hang off of, so — like every
+  // other row's own trailing children chips — they're shown unconditionally
+  // (not just before a root is picked) so the root choice stays changeable.
+  const roots = DATA.categories[activeCategory].roots;
+  if (roots.length > 0 && !isSingleton(roots)) {
+    container.appendChild(
+      renderChildrenChips(roots, rows.length > 0 ? rows[0].key : null, 0)
+    );
+  }
+
+  let toggleShown = false;
+  rows.forEach((row, i) => {
+    const nextKey = i + 1 < rows.length ? rows[i + 1].key : null;
+    const { el, usedToggle } = renderRow(row, nextKey, !toggleShown);
+    if (usedToggle) toggleShown = true;
+    container.appendChild(el);
+  });
+
+  if (rows.length > 0 && trailingChildren.length === 0) {
+    container.appendChild(renderEmpty("Terminal — no further strokes."));
+  }
+}
+</script>
+</body>
+</html>

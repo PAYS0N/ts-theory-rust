@@ -1,0 +1,11 @@
+Buckets sibling leaves that share a tree position and source stroke into single "axis" choice nodes, so that `@count`/`@fuse`/`@type` alternatives of one authored line render as one path node with N labeled options rather than N near-duplicate flat siblings. Consumed by the viz_data tree-building pipeline (caller is `tree.rs`, which computes `Leaf.position`: real stroke prefixes for descendant nodes, a synthetic per-category position for roots).
+
+Core entry point is `group(leaves: &[Leaf<'_>]) -> Grouped`, which buckets leaves by `(position, source.stroke_raw)` in first-seen order, then delegates to `emit` to turn each bucket into either a plain leaf key (bucket size 1) or a synthetic axis key of the form `#{line}.{idx}` (size >1). The `idx` in that key is the bucket's positional index among *all* buckets, not the source line number — this matters because one authored source line can produce multiple buckets at different tree depths (e.g. a fused shape/type choice, plus a nested generic-arg's own type choice further down), so line number alone isn't a unique axis identity.
+
+`Grouped` holds `children_of: HashMap<String, Vec<String>>` (tree position -> ordered next-step keys, each either a real leaf key or a synthetic axis key) and `axes: Vec<(String, Axis)>` (synthetic axis key -> its `Axis` metadata, in first-seen order for deterministic JSON output).
+
+The axis `Kind` (`Count` vs `Type`) is decided per-bucket by `kind(entry)`, which checks `entry.type_label.is_some()` — deliberately *not* `source.count.is_some()`, because a `@count` entry can still carry `%t` type slots (e.g. "typed param"); the differentiator that matters is what these particular sibling entries vary by, not what directives the source line happens to have. `label(entry, kind)` derives each choice's display label: for `Count`, the resolved count digit (empty string if absent); for `Type`, the type name, falling back to `"default"` for a free/untyped variant.
+
+`Leaf<'a>` bundles a real node key, its tree position, and a representative `&TypedEntry` — callers rely on `source`/`count`/`type_label` being identical across all multi-line/one-liner variants sharing that key (post lineflag-merge), so picking any one representative is safe.
+
+Depends on `steno::TypedEntry` from the main crate for entry field access; no other non-obvious dependencies.

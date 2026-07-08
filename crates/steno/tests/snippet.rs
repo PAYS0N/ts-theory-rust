@@ -48,6 +48,7 @@ fn template_literal() -> Option<TypedEntry> {
         terminal: true,
         one_liner: false,
         count: None,
+        type_label: None,
         source,
     })
 }

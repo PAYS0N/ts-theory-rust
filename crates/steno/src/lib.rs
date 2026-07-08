@@ -10,7 +10,8 @@
 //!
 //! Data flows strictly forward; every failure is a typed error carrying the
 //! 1-based source line where applicable. Output files are written only by the
-//! `build-dict`, `build-nvim`, and `measure` binaries, never by library code.
+//! `build-dict`, `build-nvim`, `measure`, and `viz-data` binaries, never by
+//! library code.
 
 mod blocks;
 mod editor;
@@ -32,7 +33,7 @@ pub use expand::{
     ExpandedEntry, ITERATION_BASE, TypeDef, TypeOptions, TypeSet, TypedEntry, build_type_set,
     expand_all, expand_counts, expand_dict, expand_line_flag, expand_types, expand_types_one,
 };
-pub use json_out::{OrderedMap, to_json};
+pub use json_out::{OrderedMap, json_string, to_json};
 pub use parse::{Chunk, Entry, EntryFlags, Expr, parse_source, parse_template};
 pub use render::{BuildResult, build_plain_dict, build_smart_dict, render_plain, render_smart};
 pub use snippet::{

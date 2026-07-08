@@ -1,0 +1,7 @@
+This directory is a single, self-contained browser visualizer: one HTML file with inline JS/CSS, no build step, no other source files or subdirectories. Its entire external contract is consuming `../out/viz-data.json` (produced by `target/debug/viz-data` elsewhere in the repo) and rendering it as a clickable stroke-tree explorer.
+
+Since there is exactly one file, there is no cross-file coupling to describe within `viz/` — the coupling that matters is external, between `index.html`'s hardcoded JSON field assumptions (`categories`, `nodes[key].children/terminal/description/multiLine/oneLiner/oneLinerRoot/axis`) and whatever schema `viz-data` emits; that schema lives outside this directory, so a change on either side must be coordinated manually since there's no validation layer here to catch drift.
+
+Any future addition to this directory (e.g. splitting the inline script into separate JS/CSS files, or adding a build step) should preserve the current state model described in `index.html.ctx` — `path`, `oneLinerActive`, `axisSelection`, singleton auto-chaining, and the self-healing truncation on invalid path entries — since that logic is the crux of correctness, not just presentation.
+
+intent_divergence: no intent.md exists for this directory, so no divergence can be assessed.

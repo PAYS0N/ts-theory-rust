@@ -46,6 +46,9 @@ pub struct TypedEntry {
     pub one_liner: bool,
     /// The count value, or None for a non-count entry.
     pub count: Option<u32>,
+    /// The type name/partial name chosen at this step's `%t` slot (fused or
+    /// appended), or None when this entry has no type slot.
+    pub type_label: Option<String>,
     /// The parsed entry this expansion came from.
     pub source: Entry,
 }

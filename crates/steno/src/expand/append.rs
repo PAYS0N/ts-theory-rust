@@ -21,6 +21,7 @@ fn typed(
     stroke: String,
     template: Vec<Chunk>,
     terminal: bool,
+    type_label: Option<String>,
 ) -> TypedEntry {
     TypedEntry {
         stroke,
@@ -28,6 +29,7 @@ fn typed(
         terminal,
         one_liner: false,
         count: entry.count,
+        type_label,
         source: entry.source.clone(),
     }
 }
@@ -51,7 +53,14 @@ fn emit_multi(
     let suffix: Vec<&str> = chosen.iter().map(|t| t.stroke.as_str()).collect();
     let stroke = format!("{}/{}", entry.stroke, suffix.join("/"));
     let template = with_types(&entry.template, slots, &texts);
-    out.push(typed(entry, stroke, template, chosen.len() == slots.len()));
+    let type_label = chosen.last().map(|t| t.text.clone());
+    out.push(typed(
+        entry,
+        stroke,
+        template,
+        chosen.len() == slots.len(),
+        type_label,
+    ));
 }
 
 /// Recursion for the multi-slot fill: emit every non-empty prefix of pool
@@ -80,7 +89,7 @@ fn rec_multi(
 fn expand_multi_slot(entry: &ExpandedEntry, slots: &[usize], pool: &[TypeDef]) -> Vec<TypedEntry> {
     let empty: Vec<String> = slots.iter().map(|_| String::new()).collect();
     let base = with_types(&entry.template, slots, &empty);
-    let mut out = vec![typed(entry, entry.stroke.clone(), base, false)];
+    let mut out = vec![typed(entry, entry.stroke.clone(), base, false, None)];
     rec_multi(entry, slots, pool, &[], &mut out);
     out
 }
@@ -108,6 +117,7 @@ fn expand_fused(
             stroke_segs.join("/"),
             fill_template(&entry.template, slot, &f),
             f.terminal,
+            Some(f.text.clone()),
         ));
     }
     Ok(out)
@@ -120,6 +130,7 @@ fn appended(entry: &ExpandedEntry, slot: usize, f: &Filling) -> TypedEntry {
         format!("{}/{}", entry.stroke, f.suffix.join("/")),
         fill_template(&entry.template, slot, f),
         f.terminal,
+        Some(f.text.clone()),
     )
 }
 
@@ -147,6 +158,7 @@ pub fn expand_types_one(
             entry.stroke.clone(),
             entry.template.clone(),
             true,
+            None,
         )]);
     };
     if slots.len() > 1 {
@@ -157,7 +169,7 @@ pub fn expand_types_one(
     }
     // base: the skeleton before any type is appended (non-terminal)
     let base = with_types(&entry.template, &[slot], &[String::new()]);
-    let mut out = vec![typed(entry, entry.stroke.clone(), base, false)];
+    let mut out = vec![typed(entry, entry.stroke.clone(), base, false, None)];
     for f in fillings(opts) {
         out.push(appended(entry, slot, &f));
     }

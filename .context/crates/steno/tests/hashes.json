@@ -1,5 +1,5 @@
 {
-  "hash": "b5968ff8c8d028ba6932c2ffcaf5e5c97d7b6def06bece8fc2286c685618f19f",
+  "hash": "84c54e1b3589843069be75f3933993cc0543a60e083ee1ecd4471b38a5fca52e",
   "children": {
     "blocks.rs": "f:f88bff4a0c3b0e99df0a5086967001fc1181522fdcda9d78dc461b2ee460dd74",
     "editor.rs": "f:ee17db60256cd0dae004c3a2923f15e26f9594bda3465c74142f04480f4edfd2",
@@ -9,8 +9,8 @@
     "parse_source.rs": "f:0b78f763c870579c985ded47cabbe50ace3aed6038e11d357e8b99f04a2740a1",
     "parse_template.rs": "f:067d3e560aa4accd28e75bad3d93e1de240bf61ac7c87ca12d5a090f9de5f29f",
     "render.rs": "f:81dd40c3041ffc575c67f4bb0aa4604a42836f769bd3e9b8e1419de17503a391",
-    "smart.rs": "f:fa05fd9e8bd625b7a233470010bf0cbabcc6257b215efc19c883ce80732efc8e",
-    "snippet.rs": "f:e16b4cebf1d5da89e419f2a3995d8548c696905a6db169b9d557676429f39304",
+    "smart.rs": "f:e215e86fdef68e72b91b4946ccde53afbd0ab7430836a35c4cc809286e733863",
+    "snippet.rs": "f:8fab96202d6a909d194af5844dfa18d4a95a92526f0c6c95a3b34e11c393ee90",
     "stroke.rs": "f:cdb78450d58a860fd1386f62d495198030062a8738ccefb47a349704f8e9a0a0",
     "stroke_order.rs": "f:ea77a13d69ca6dc775c68ec0b177cd398d470943d4240b1bff8f3cc6422621d9"
   }

@@ -22,3 +22,7 @@ path = "src/bin/build_nvim.rs"
 [[bin]]
 name = "measure"
 path = "src/bin/measure.rs"
+
+[[bin]]
+name = "viz-data"
+path = "src/bin/viz_data/main.rs"

@@ -1,8 +1,9 @@
 {
-  "hash": "28eccffd838c2e0a0cdac3090b9ab981e3dc7f4d20d5751ccdbf5fab0d1f3426",
+  "hash": "3020fd8e4af74f74063d06958ba9500945b38a316103a1e44ae9570383d5de07",
   "children": {
     "build_dict.rs": "f:18dcb8fdf77d7d1f20e8a9956d8e59294ce323d3d6172722c73a3f1bef3a34d7",
     "build_nvim.rs": "f:738367380da2cb002d052b78e8ef115d2be8f7200d385e7679855c20b5bc37db",
-    "measure.rs": "f:5c0872ee3311c30726d0468076449b2dcf104d8ce8d7ced36bd9b1a8b5086cb4"
+    "measure.rs": "f:5c0872ee3311c30726d0468076449b2dcf104d8ce8d7ced36bd9b1a8b5086cb4",
+    "viz_data": "d:2f76349873dd56d140eb1e8bc3b0fe1e994c629ac4a02d0d345150832679bb6d"
   }
 }

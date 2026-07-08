@@ -1,12 +1,13 @@
 {
-  "hash": "ff7fdba292ffb4f3110e30e2d92963b6622bd1fe33776de7348cf86df08c77ed",
+  "hash": "3c32edb82c984dfadf204781407ea7380a3c4c44f608297b33f75584657b1bd7",
   "children": {
     ".github": "d:47bde68bac88f11059512fe35e12f1f9ff2427c1cb45f2ea8c097cd165ba12df",
     "Cargo.lock": "f:e1f2504280f1721360f6cf43a3ac9c09448fb866d4e1465ef5f9aee30dee4f37",
-    "crates": "d:826e20f4bdc5511aad26be6785a57b6ff3e560ba1ba9fdee7023a4af61fa63dd",
-    "dict.steno": "f:b3bbd3d78978471293f79e0eb5fa39d59163eb95400dcd6e3dcc08326317af4b",
+    "crates": "d:d2fe424e26cda9cde1fe25684acbe50cd19b9b3c3c18b57ada71f20f64311076",
+    "dict.steno": "f:fdb2048ffa243cf49ce85fff690d42a32e7a2bd88a106ab5752e24a77522bbd3",
     "docs": "d:d62b6a0dd17ef560e332728bc13849c1f20f27f51ce0ad9dd037e611dc19cf49",
     "nvim": "d:1ff4a7aec86eac8fcdcb56d3a4d9d5bf596d3277826f82c52a6022969ff10380",
-    "scripts": "d:4df38876d8b4a6d9c373f376c4f3b01c10ba6c1c772b6e43c50eefd25eefef49"
+    "scripts": "d:4df38876d8b4a6d9c373f376c4f3b01c10ba6c1c772b6e43c50eefd25eefef49",
+    "viz": "d:9e8340f858acf1a6bca1ab0838647f6361de07c61376af7d0b8f9a37974908a3"
   }
 }

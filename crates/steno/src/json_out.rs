@@ -109,6 +109,16 @@ fn push_json_string(s: &str, out: &mut String) {
     out.push('"');
 }
 
+/// `JSON.stringify`-compatible escaping of `s` as a quoted string, for
+/// callers assembling JSON shapes richer than [`OrderedMap`]'s flat
+/// `string -> string` map.
+#[must_use]
+pub fn json_string(s: &str) -> String {
+    let mut out = String::new();
+    push_json_string(s, &mut out);
+    out
+}
+
 /// Serialize an ordered map as `{\n"k": "v",\n...\n}\n` — one entry per line,
 /// `JSON.stringify`-compatible string escaping, insertion order.
 #[must_use]
