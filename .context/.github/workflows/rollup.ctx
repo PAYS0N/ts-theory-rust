@@ -1,5 +1,5 @@
-.github/workflows/ is the GitHub Actions entry point for CI — it's the only thing that runs on push-to-main and pull requests, and its job is purely to prepare an environment (checkout, toolchain via `rust-toolchain.toml`, cargo cache, three extra cargo subcommands) and hand off to `scripts/ci.sh`, which holds all actual check logic. Depending on this directory gets you nothing directly; it's infrastructure, not an API — the real contract is with `scripts/ci.sh` and `rust-toolchain.toml` at the repo root.
+`.github/workflows/` defines CI/CD automation for this repo — currently a single pipeline that publishes a visualization site to GitHub Pages on push to `main` or manual dispatch.
 
-Only one file, ci.yml, defines the one job. Anyone adding a new CI check tool must edit two places outside this reasoning boundary in lockstep: install the tool in ci.yml, invoke it in scripts/ci.sh — a mismatch here silently no-ops the new check rather than failing loudly.
+The workflow's contract with the rest of the repo is implicit and fragile: it expects a `viz-data` binary in the Cargo workspace that writes `out/viz-data.json`, and expects `viz/index.html` to read that file by its current relative path. Renaming either the binary target, its output path, or `viz/index.html` breaks the deploy silently (the build step won't fail, only the published site will be wrong). It also depends on a toolchain pin (`rustup show`) existing at the repo root and on `pages`/`id-token: write` permissions being enabled in repo settings — neither of which this file controls.
 
-No intent.md exists for this directory.
+No intent.md exists for this directory to check against.

@@ -54,7 +54,7 @@ no trailing slash.
 
 ### 2–4. `STKWR-LT` "template literal" tests (smart cursor, snippet `${0}`, snippet escaping)
 
-Three upstream tests asserted behavior for `STKWR-LT` as a `` `${%0}` `` template
+Three upstream tests asserted behavior for `STKWR-LT` as a {% raw %}`` `${%0}` ``{% endraw %} template
 literal:
 
 - `smart.test.ts` — the cursor lands inside `${}` with no movement.
@@ -65,7 +65,7 @@ The corpus repurposed `STKWR-LT` to a `let %0: %t = %1` binding (a non-terminal
 type-slot entry), so the tests pointed at a fixture that no longer matched — the
 sole reason they fail upstream.
 
-**Resolution:** the renderer is correct and unchanged — for a `` `${%0}` ``
+**Resolution:** the renderer is correct and unchanged — for a {% raw %}`` `${%0}` ``{% endraw %}
 template it still produces exactly the originally-expected values
 (`{^}`$\{{^}` and `` `\${${0}\}` ``). The port therefore builds that template
 literal directly through the public API (`parse_template` + a `TypedEntry`; see

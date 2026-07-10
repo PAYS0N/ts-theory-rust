@@ -1,0 +1,5 @@
+GitHub Actions workflow that publishes the visualization site to GitHub Pages. Triggers on push to `main` and via manual `workflow_dispatch`; uses the `pages` concurrency group with `cancel-in-progress: false`, so overlapping deploys queue rather than cancel.
+
+Build steps: checks out the repo, runs `rustup show` to install the pinned toolchain (so this depends on a `rust-toolchain.toml` or similar existing at repo root), runs `cargo run --bin viz-data` to generate `out/viz-data.json`, then assembles `_site/` from `viz/index.html` and that generated JSON before uploading as a Pages artifact. The deploy job depends on `build` and publishes via `actions/deploy-pages@v4`.
+
+Coupling: assumes a `viz-data` binary target exists in the Cargo workspace producing `out/viz-data.json`, and that `viz/index.html` reads its data from `out/viz-data.json` relative to itself — moving either file's path breaks the deploy without failing the build step. Requires `pages` and `id-token: write` permissions configured in repo settings for OIDC-based Pages deployment.

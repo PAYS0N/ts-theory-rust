@@ -1,38 +1,7 @@
-`.` is the root of a Rust reimplementation of a TypeScript steno-theory
-compiler: it turns `dict.steno` (the canonical DSL source, strict
-fenced-block grammar) into four generated artifacts under `out/` — two
-Plover dictionaries and two Neovim-plugin tables — via the pipeline
-exposed from `crates/steno`. Depending on this repo means either running
-one of its three binaries (`build`, `build-nvim`, `measure`) or
-`require`-ing the `nvim/` Lua plugin against the JSON it produces;
-nothing else is a supported integration point.
+`.` is the workspace root of a Rust reimplementation of a TypeScript steno-theory compiler: `dict.steno` in, four generated dictionary/snippet artifacts under `out/` out, consumed by Plover and a bundled Neovim plugin. The entire compiler and its binaries live in `crates/steno`; everything else at this level is documentation, CI tooling, or a visualization aid that must track the crate but isn't part of its build.
 
-The load-bearing coupling spans four places that must move together:
-`dict.steno`'s directive/operator grammar, `docs/steno-format.md`'s
-description of that grammar, `crates/steno/src/parse.rs`'s implementation
-of it, and `viz/index.html`'s hand-copied stroke-layout/one-liner-toggle
-logic — none of these three doc/copy locations are enforced against the
-code automatically, so a grammar or stroke-layout change made in one and
-not the others silently breaks parsing, docs, or the visualizer. `docs/`
-is the pre-commit spec layer (grammar, pass-order/error taxonomy, and
-pinned TS-vs-Rust precedent); `crates/steno` is the only place that
-compiles it; `scripts/ci.sh` gates every push/PR against static checks
-(fmt/clippy/deny/machete plus repo-local rationale/lint/cycle checks) and
-is the single list of what CI enforces; `.github/workflows` is what
-invokes `ci.sh`; `nvim/` and `viz/` are the two independent consumers of
-generated JSON, one a live editor plugin, one a static human-facing
-inspector.
+The load-bearing cross-cutting fact is that `dict.steno` is the single source of truth for stroke/template syntax, and three independent things must stay in sync with it and with each other whenever that syntax changes: the parser inside `crates/steno`, the normative docs in `docs/` (`steno-format.md` for grammar, `pipeline.md` for pass semantics), and the hand-maintained JS copy of stroke-key layout and one-liner logic in `viz/index.html`. None of these sync relationships are enforced by tooling — an editor changing a directive, operator, or stroke-key layout must manually touch all three docs and, if relevant, `viz/`.
 
-Invariant holding across the whole tree: dataflow is one-way (stroke ←
-parse ← expand ← {editor, render, snippet, blocks}), `dict.steno` is
-read-only source of truth never mutated by tests or tooling, and no
-runtime/network/async/unsafe dependency exists anywhere — `Cargo.lock`
-confirms zero external dependencies are currently locked. A typical
-cross-cutting change starts in `dict.steno` + `docs/steno-format.md`
-together, then propagates into `crates/steno/src/parse.rs` and, if stroke
-layout is involved, into `viz/index.html`.
+`scripts/ci.sh` is the authoritative Layer 1 quality gate over the Rust workspace (fmt/clippy/deny/machete plus four repo-local checks); `.github/workflows/` is the deploy pipeline that presumably invokes it. `Cargo.lock` currently locks zero dependencies, consistent with the project's no-runtime-dependencies non-goal. `nvim/` is a separate, independently-versioned Lua consumer of the snippet JSON artifact, coupled to `crates/steno`'s output schema, not its source.
 
-`crates/` holds the one compiled artifact; `docs/` is its spec;
-`scripts/`+`.github/` are the CI gate; `nvim/` and `viz/` are the two
-consumers; `dict.steno` is the shared source data; `Cargo.lock` reflects
-the zero-dependency policy.
+No root-level intent divergence: the described structure — one library+binaries crate, doc/parser/viz sync obligations, a CI script, and a plugin consumer — matches `intent.md`'s stated architecture and non-goals.
