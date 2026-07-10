@@ -1,0 +1,7 @@
+Runs `cargo-machete` against the workspace to enforce a stated project policy (docs/SPEC.md, Dependency policy) of zero unused dependencies, reformatting its output into one `FAIL:` line per unused dependency. Invoked as `machete_check.sh [ROOT=.]`.
+
+The tool being absent is a hard failure, not a skip: it exits 1 with a FAIL if `cargo-machete` isn't on PATH, because "no unused dependencies" is enforced policy and silently skipping would make the calling ctx-verify pass misleadingly. It never uses `cargo metadata` or network, keeping it consistent with the other offline static checks (contrast with `cargo deny`, which needs the resolved graph) — this is also why cycle_check.sh takes the same missing-tool-is-FAIL posture.
+
+Output parsing is brittle by design: it expects cargo-machete's report shape of `<crate> -- <path/Cargo.toml>:` header lines followed by tab-indented dependency names, extracted via an awk script keyed on that literal format. If cargo-machete changes its output format, the awk pattern silently stops matching and falls through to the generic "cargo machete failed" fallback path. That fallback specifically covers the case where `cargo machete` exits non-zero but produces no parseable unused-dep lines (e.g., an unreadable manifest) — ensuring failure is never silent even when the primary parser finds nothing.
+
+Exit code is the script's own `$FAIL`/`1` flag, not cargo-machete's raw `rc` — a real error with unparseable output still exits 1 via the fallback branch.

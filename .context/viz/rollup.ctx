@@ -1,5 +1,16 @@
-This directory contains exactly one file, `index.html`, which is the entire viz subtree — a self-contained static HTML/JS/CSS viewer with no build step, no other source files, and no subdirectories.
+`viz/` is a single-file static frontend for inspecting the compiled steno
+stroke tree, consumed only by a human running it in a browser against a
+locally generated `../out/viz-data.json`; it has no other contract with
+the rest of the codebase beyond that JSON shape and must be served over
+`http://`.
 
-Since there's only one child, this rollup adds nothing `index.html.ctx` doesn't already state: it's a single-page tree browser for `../out/viz-data.json`, with a hand-maintained JS mirror of the Rust stroke-parsing logic in `crates/steno/src/stroke/keys.rs` that must be kept in lockstep, and global mutable state (`path`, `axisSelection`, `oneLinerActive`, `currentOneLinerRoot`) driving re-renders. Any change here starts and ends in that one file — there is no cross-file coupling to describe within this directory.
+The whole subtree is `index.html.ctx` — one file, so there's no
+cross-file coupling within `viz/` itself. The coupling that matters is
+external: the bank layout constants and stroke parser here are a hand
+maintained copy of `crates/steno/src/stroke/keys.rs`, and the one-liner
+toggle semantics mirror `lineflag.rs`. Any change to canonical stroke
+layout, parsing, or one-liner/multi-line selection rules in the Rust
+crate requires a matching edit here, with nothing to enforce that
+automatically.
 
-No `intent.md` exists for this directory, so there is nothing to check divergence against.
+intent_divergence: no intent.md exists for this directory.
