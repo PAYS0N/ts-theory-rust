@@ -1,8 +1,10 @@
-//! Scans `dict.steno`'s raw text for explicit `## label` category markers
-//! and `### text` description markers. Ordinary `#`/`//` comments stay
-//! inert prose; only a line matching `^##\s+(.+)$` starts (or re-starts) a
-//! category, applying to every entry from that line until the next `##`
-//! line; a line matching `^###\s+(.+)$` describes only the single fenced
+//! Scans `dict.steno`'s raw text for explicit `## label` category markers,
+//! `##> label` section markers, and `### text` description markers. Ordinary
+//! `#`/`//` comments stay inert prose. A line matching `^##\s+(.+)$` (but not
+//! `##>` or `###`) starts (or re-starts) a category, applying to every entry
+//! until the next `##` line; a `^##>\s+(.+)$` line starts a section that
+//! sub-divides the current category's shared-stroke children until the next
+//! `##>` or `##` line; a `^###\s+(.+)$` line describes only the single fenced
 //! entry immediately following it (blank lines in between are allowed, any
 //! other content clears it).
 
@@ -24,15 +26,35 @@ pub fn scan(src: &str) -> Vec<Marker> {
         .collect()
 }
 
-/// `Some(label)` when `line` is a `## label` marker, trimmed. A `###`
-/// description marker (point 5) is deliberately excluded, since it would
-/// otherwise also match the `##` prefix.
+/// `Some(label)` when `line` is a `## label` marker, trimmed. Both the
+/// `###` description marker and the `##>` section marker are excluded, since
+/// each would otherwise also match the bare `##` prefix.
 fn marker_label(line: &str) -> Option<String> {
     let rest = line.trim_start().strip_prefix("##")?;
-    if rest.starts_with('#') {
+    if rest.starts_with('#') || rest.starts_with('>') {
         return None;
     }
     let label = rest.trim();
+    if label.is_empty() {
+        None
+    } else {
+        Some(label.to_owned())
+    }
+}
+
+/// Find every `##> label` section line in `src`, in file order. A section
+/// sub-divides the children of a shared stroke *within* the current `##`
+/// category (e.g. array vs. string methods hanging off one `.` accessor).
+pub fn scan_sections(src: &str) -> Vec<Marker> {
+    src.lines()
+        .enumerate()
+        .filter_map(|(i, line)| section_label(line).map(|label| Marker { line: i + 1, label }))
+        .collect()
+}
+
+/// `Some(label)` when `line` is a `##> label` section marker, trimmed.
+fn section_label(line: &str) -> Option<String> {
+    let label = line.trim_start().strip_prefix("##>")?.trim();
     if label.is_empty() {
         None
     } else {
@@ -48,6 +70,24 @@ pub fn label_for(markers: &[Marker], entry_line: usize) -> &str {
         .rev()
         .find(|m| m.line < entry_line)
         .map_or("Uncategorized", |m| m.label.as_str())
+}
+
+/// The active section label for `entry_line`, or `None`. A `##>` section
+/// only applies until the next `##>` or the next plain `##` category — so a
+/// section is active only when its marker is more recent than any category
+/// marker preceding the entry.
+pub fn section_for<'a>(
+    sections: &'a [Marker],
+    categories: &[Marker],
+    entry_line: usize,
+) -> Option<&'a str> {
+    let sec = sections.iter().rev().find(|m| m.line < entry_line)?;
+    let cat_line = categories
+        .iter()
+        .rev()
+        .find(|m| m.line < entry_line)
+        .map_or(0, |m| m.line);
+    (sec.line > cat_line).then_some(sec.label.as_str())
 }
 
 /// Find every `### text` line in `src` that (modulo blank lines) directly

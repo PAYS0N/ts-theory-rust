@@ -21,6 +21,7 @@ const fn blank_node(entry: &TypedEntry) -> Node {
         axis: None,
         description: None,
         one_liner_root: None,
+        synthetic: false,
     }
 }
 
@@ -138,15 +139,32 @@ fn insert_all<'a>(
     Ok(())
 }
 
-/// Build the full tree from expanded entries and the source's `##` markers.
+/// Build the full tree from expanded entries and the source's `##` category
+/// and `##>` section markers.
 ///
 /// # Errors
 /// Propagates any rendering failure as its message.
 pub fn build(
     typed: &[TypedEntry],
     markers: &[Marker],
+    sections: &[Marker],
     desc_map: &HashMap<usize, String>,
 ) -> Result<Tree, String> {
+    let (mut tree, reps) = insert_leaves(typed, markers, desc_map)?;
+    group_leaves(&mut tree, &reps, markers, sections);
+    Ok(tree)
+}
+
+/// Render every entry into a leaf-only [`Tree`], returning it alongside the
+/// per-key representative entries the grouping pass still needs.
+///
+/// # Errors
+/// Propagates any rendering failure as its message.
+fn insert_leaves<'a>(
+    typed: &'a [TypedEntry],
+    markers: &[Marker],
+    desc_map: &HashMap<usize, String>,
+) -> Result<(Tree, HashMap<String, &'a TypedEntry>), String> {
     let mut categories = Vec::new();
     let mut category_index = HashMap::new();
     let mut node_order = Vec::new();
@@ -160,13 +178,31 @@ pub fn build(
         category_index: &mut category_index,
     };
     insert_all(typed, markers, desc_map, &mut state)?;
+    Ok((
+        Tree {
+            categories,
+            node_order,
+            nodes,
+        },
+        reps,
+    ))
+}
 
-    let leaf_inputs = grouping::leaves(&node_order, &reps, markers);
-    let grouped = axis::group(&leaf_inputs);
-    grouping::apply_grouping(&mut node_order, &mut nodes, &mut categories, grouped);
-    Ok(Tree {
-        categories,
-        node_order,
-        nodes,
-    })
+/// Run both grouping passes over the freshly-inserted leaf nodes: bucket
+/// leaves into axes, then splice in section/axis nodes and resolve roots.
+fn group_leaves(
+    tree: &mut Tree,
+    reps: &HashMap<String, &TypedEntry>,
+    markers: &[Marker],
+    sections: &[Marker],
+) {
+    let inputs = grouping::leaves(&tree.node_order, reps, markers, sections);
+    let grouped = axis::group(&inputs.leaves);
+    grouping::apply_grouping(
+        &mut tree.node_order,
+        &mut tree.nodes,
+        &mut tree.categories,
+        grouped,
+        &inputs.sections,
+    );
 }

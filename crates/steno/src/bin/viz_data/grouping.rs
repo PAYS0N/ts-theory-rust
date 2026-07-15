@@ -5,29 +5,112 @@ use std::collections::HashMap;
 
 use steno::TypedEntry;
 
-use crate::axis::{self, Leaf};
-use crate::comments::{Marker, label_for};
-use crate::tree::{Category, Node, position};
+use std::collections::HashSet;
 
-/// Build every leaf's grouping input: its key, tree position, and a
-/// representative entry.
+use crate::axis::{self, Leaf};
+use crate::comments::{Marker, label_for, section_for};
+use crate::tree::{Category, Node, position, section_parts};
+
+/// A synthetic `##>` section node to splice into the tree: its own position
+/// key, the parent stroke position it hangs off, and the label to display.
+pub struct Section {
+    /// The section node's key (also its bucketing position).
+    pub key: String,
+    /// The parent stroke position whose children list gains this section.
+    pub parent: String,
+    /// The label shown for the section (its `##>` text).
+    pub label: String,
+}
+
+/// Every leaf's bucketing input plus the section nodes to splice in, both in
+/// first-seen (file) order.
+pub struct LeafInputs<'a> {
+    /// One entry per original node, ready for axis bucketing.
+    pub leaves: Vec<Leaf<'a>>,
+    /// Synthetic section nodes, deduped in first-seen order.
+    pub sections: Vec<Section>,
+}
+
+/// Build every leaf's grouping input (key, tree position, representative
+/// entry) and the section nodes their positions imply. A descendant carrying
+/// an active `##>` section gets a synthetic `sec:` position, which also
+/// records a [`Section`] to splice under the shared parent stroke.
 pub fn leaves<'a>(
     node_order: &[String],
     reps: &HashMap<String, &'a TypedEntry>,
-    markers: &[Marker],
-) -> Vec<Leaf<'a>> {
-    node_order
-        .iter()
-        .filter_map(|key| {
-            let entry = *reps.get(key)?;
-            let label = label_for(markers, entry.source.line);
-            Some(Leaf {
-                key: key.clone(),
-                position: position(key, label),
-                entry,
-            })
-        })
-        .collect()
+    categories: &[Marker],
+    sections: &[Marker],
+) -> LeafInputs<'a> {
+    let mut leaves = Vec::new();
+    let mut secs = Vec::new();
+    let mut seen = HashSet::new();
+    for key in node_order {
+        let Some(&entry) = reps.get(key) else {
+            continue;
+        };
+        let label = label_for(categories, entry.source.line);
+        let section = section_for(sections, categories, entry.source.line);
+        let pos = position(key, label, section);
+        record_section(&mut secs, &mut seen, &pos);
+        leaves.push(Leaf {
+            key: key.clone(),
+            position: pos,
+            entry,
+        });
+    }
+    LeafInputs {
+        leaves,
+        sections: secs,
+    }
+}
+
+/// Record a first-seen [`Section`] when `pos` is a synthetic section key.
+fn record_section(secs: &mut Vec<Section>, seen: &mut HashSet<String>, pos: &str) {
+    if let Some((parent, label)) = section_parts(pos)
+        && seen.insert(pos.to_owned())
+    {
+        secs.push(Section {
+            key: pos.to_owned(),
+            parent: parent.to_owned(),
+            label: label.to_owned(),
+        });
+    }
+}
+
+/// A synthetic section grouping node: no stroke of its own, just a labeled
+/// drill-down whose children (filled by `apply_children`) are its members.
+fn section_node(label: &str) -> Node {
+    Node {
+        terminal: false,
+        multi_line: None,
+        one_liner: None,
+        children: Vec::new(),
+        axis: None,
+        description: Some(label.to_owned()),
+        one_liner_root: None,
+        synthetic: true,
+    }
+}
+
+/// Create each section node and link it into its parent's children list, in
+/// first-seen order. Runs before `apply_children` so the new nodes and parent
+/// links are visible when children are copied in.
+fn link_sections(
+    node_order: &mut Vec<String>,
+    nodes: &mut HashMap<String, Node>,
+    children_of: &mut HashMap<String, Vec<String>>,
+    sections: &[Section],
+) {
+    for sec in sections {
+        if !nodes.contains_key(&sec.key) {
+            node_order.push(sec.key.clone());
+            nodes.insert(sec.key.clone(), section_node(&sec.label));
+        }
+        let kids = children_of.entry(sec.parent.clone()).or_default();
+        if !kids.contains(&sec.key) {
+            kids.push(sec.key.clone());
+        }
+    }
 }
 
 /// Populate every leaf node's `children` from the bucketed positions.
@@ -92,24 +175,29 @@ fn add_axis_node(
             axis: Some(data),
             description: m.description,
             one_liner_root: m.one_liner_root,
+            synthetic: false,
         },
     );
 }
 
-/// Apply the full grouping pass: children on every leaf, synthetic axis
-/// nodes appended, and category roots resolved from the same buckets.
+/// Apply the full grouping pass: section nodes spliced in, children on every
+/// leaf, synthetic axis nodes appended, and category roots resolved from the
+/// same buckets.
 pub fn apply_grouping(
     node_order: &mut Vec<String>,
     nodes: &mut HashMap<String, Node>,
     categories: &mut [Category],
     grouped: axis::Grouped,
+    sections: &[Section],
 ) {
-    apply_children(nodes, &grouped.children_of);
+    let mut children_of = grouped.children_of;
+    link_sections(node_order, nodes, &mut children_of, sections);
+    apply_children(nodes, &children_of);
     for (axis_key, data) in grouped.axes {
         add_axis_node(node_order, nodes, axis_key, data);
     }
     for cat in categories {
-        if let Some(roots) = grouped.children_of.get(&format!("cat:{}", cat.label)) {
+        if let Some(roots) = children_of.get(&format!("cat:{}", cat.label)) {
             cat.roots.clone_from(roots);
         }
     }

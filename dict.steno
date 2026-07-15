@@ -19,7 +19,7 @@
 
 
 
-## functions
+## fuNcTIONs
 # Functions carry one inline param; more come from STKWR-PB. @fuse merges the
 # return type into the shape stroke, so `func / TPH-FLT` -> a number function
 # directly (no required type-less intermediate stroke).
@@ -91,26 +91,30 @@ set %0(%1) {%b%2}
 ## params
 
 # params: drop bare comma-separated cursor slots inside an existing () — no parens.
-### bare param
+### Bare Param
 ````STKWR-PB
 %[, |%(d)%]
 ````
 @count AOE
 
 # typed params (<=3 via the AO bank): each slot is `name: type`, type appended per slot.
-### typed param
+### Typed Param
 ````STKWR-PT
 %[, |%(d): %t%]
 ````
 @count AO
 
-
+### cLaSs Param
+````STKWR-PLS
+%[;%b |%(d): %t%]
+````
+@count AO
 
 
 # if/else control
 
 
-## if
+## iF
 ###iF
 ````STKWR-F
 if(%0) {%b%1}
@@ -142,7 +146,7 @@ if(%0 === %1) {%b%2}
 ````
 
 
-## else if
+## else iF
 
 ###else iF
 ````STKWR*F
@@ -175,7 +179,7 @@ else if(%0 === %1) {%b%2}
 ````
 
 
-## else
+## eLSe
 
 ###eLSe
 ````STKWR-LS
@@ -183,7 +187,7 @@ else {%b%0}
 ````
 
 
-## ternary
+## TeRNary
 
 ````STKWR-RPBT
 %0 ? %1 : %2
@@ -222,6 +226,19 @@ for(const key%0 in %1){%b%2}
 ###whiLe
 ````STKWR*L
 while(%0) {%b}
+````
+###whiLe noT
+````STKWR*LT
+while(!%0) {%b%1}
+````
+###whiLe equal to Number
+````STKWR*PBL
+while(%0 === %d) {%b%1}
+````
+@count AOE
+###whiLe eQual
+````STKWR*BLG
+while(%0 === %1) {%b%2}
 ````
 ###whiLe i uP
 ````STKWR*PL
@@ -307,13 +324,13 @@ const %0 = %1
 
 
 
-## console.log
+## console.LoG
 
 ````STKWR-LG
 console.log(%0)
 ````
 
-## throw
+## throw new eRror
 ````STKWR-R
 throw new Error(%0)
 ````
@@ -367,15 +384,19 @@ this.
 // reason to pick the block form is to want multiple lines).
 
 ## methods
+###object methods
 ````STKWR*PLT
 pre-method
 ````
 ````STKWR-PBG
 .length
 ````
+````STKWR*BGS
+.at(%0)
+````
 
 
-# array methods
+##> array methods
 
 ````STKWR*PLT/R-PL
 .map((%0) => %1)
@@ -443,12 +464,9 @@ pre-method
 ````STKWR*PLT/R*FPT
 .flatMap((%0) => {\nreturn %1})
 ````
-````STKWR*BGS
-.at(%0)
-````
 
 
-# string methods
+##> string methods
 
 ````STKWR*PLT/STR-RPLT
 .trim()
@@ -517,7 +535,7 @@ pre-method
 .toString()
 ````
 
-# math methods
+##> math methods
 ````STKWR*PLT/PH-BS
 Math.abs(%0)
 ````

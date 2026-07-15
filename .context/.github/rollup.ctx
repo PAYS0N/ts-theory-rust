@@ -1,5 +1,5 @@
-`.github/` holds repo-level automation config; today that's exactly one CI/CD pipeline, described fully in `workflows/rollup.ctx`. There's nothing else at this level — no shared scripts, issue templates, or org-wide config — so this directory's contract with the rest of the repo is entirely the deploy workflow's contract.
+`.github/` holds this repo's GitHub-native automation; it currently contains only the `workflows/` subdirectory. There's nothing at this level besides that one child — no shared config, issue templates, or other GitHub-specific files.
 
-A typical change here starts and ends in `workflows/`; there's no cross-file coupling at the `.github/` level itself since only one subtree exists.
+`workflows/` is a single CI/CD pipeline that deploys a static visualization site to GitHub Pages, with a fragile three-way coupling (binary name, output path, HTML fetch path) that CI does not verify.
 
 No intent.md exists for this directory to check against.

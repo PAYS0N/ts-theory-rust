@@ -63,9 +63,10 @@ fn load_typed(src: &str) -> Result<Vec<TypedEntry>, String> {
 fn run() -> Result<(), String> {
     let src = load_source()?;
     let markers = comments::scan(&src);
+    let sections = comments::scan_sections(&src);
     let desc_map = comments::scan_desc(&src);
     let typed = load_typed(&src)?;
-    let data = build::build(&typed, &markers, &desc_map)?;
+    let data = build::build(&typed, &markers, &sections, &desc_map)?;
     let json = json::to_json(&data);
 
     let out_dir = root().join("out");

@@ -7,8 +7,11 @@
 //! actual plugin file (not a copy) under a throwaway `nvim --headless`
 //! process and drives it through `M._try_expand`/`M._token_before_cursor`.
 //!
-//! Skipped (not failed) when `nvim` isn't on `PATH`, since CI doesn't
-//! install it.
+//! `nvim` (>=0.10, for `vim.snippet`) must be on `PATH` for these to run.
+//! A missing binary is a loud failure, not a silent skip — same posture as
+//! `scripts/cycle_check.sh`/`scripts/machete_check.sh` for their own
+//! required tools, since silently mapping "tool absent" to "test passed"
+//! is exactly what let a wrong assertion in this file go unnoticed.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -21,8 +24,16 @@ fn repo_root() -> PathBuf {
     PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
 }
 
-fn nvim_missing() -> bool {
-    Command::new("nvim").arg("--version").output().is_err()
+/// Fail loudly if `nvim` isn't on `PATH`. These tests exist specifically to
+/// exercise real `vim.snippet.expand` behavior the Rust pipeline can't
+/// reach; silently skipping when the binary is absent would let a wrong
+/// assertion pass unnoticed, as happened before this check existed.
+fn require_nvim() {
+    assert!(
+        Command::new("nvim").arg("--version").output().is_ok(),
+        "nvim not found on PATH: install nvim >=0.10 (needed for vim.snippet) \
+         to run this test"
+    );
 }
 
 /// Render `path` as a double-quoted Lua string literal.
@@ -65,8 +76,8 @@ fn assert_lua_ok(lua: &str) -> Result<(), String> {
     ))
 }
 
-/// A terminal snippet with a body-break before the exit tabstop: `if(${1})
-/// {\n${0}\}`.
+/// A terminal snippet with a single body-break before the exit tabstop:
+/// `if(${1}) {\n${0}\}`.
 const IF_SNIPPET_LUA: &str = r#"
 local M = require("steno-ts")
 local fixture = vim.fn.tempname() .. ".json"
@@ -82,21 +93,22 @@ vim.api.nvim_win_set_cursor(0, { 1, #"@@STKWR-F@@" })
 M._try_expand()
 
 local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-local expected = { "if() {", "", "}" }
+local expected = { "if() {", "}" }
 assert(
   vim.deep_equal(lines, expected),
   ("expected %s, got %s"):format(vim.inspect(expected), vim.inspect(lines))
 )
 "#;
 
-/// A terminal snippet with a body-break before the exit tabstop must expand
-/// to three lines (open brace line, a blank line holding `${0}`, close brace
-/// line) — not collapse the blank line away.
+/// A terminal snippet with a single body-break (`%b`) before the exit
+/// tabstop has exactly one `\n` in its rendered body — matching
+/// `render::tokenize`'s and `snippet::render_terminal`'s shared treatment of
+/// `Chunk::BodyBreak` as a single `Enter`/`\n` — so it must expand to two
+/// lines with `${0}` sitting directly before the escaped closing brace, not
+/// pushed onto a line of its own.
 #[test]
-fn terminal_snippet_keeps_blank_exit_line() {
-    if nvim_missing() {
-        return;
-    }
+fn terminal_snippet_places_exit_tabstop_before_closing_brace() {
+    require_nvim();
     assert_lua_ok(IF_SNIPPET_LUA).unwrap();
 }
 
@@ -150,8 +162,6 @@ assert(
 /// Plover's correction once the chord is extended.
 #[test]
 fn extending_a_chord_does_not_eat_preceding_text() {
-    if nvim_missing() {
-        return;
-    }
+    require_nvim();
     assert_lua_ok(CHORD_LUA).unwrap();
 }

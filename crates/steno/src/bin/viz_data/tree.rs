@@ -35,6 +35,9 @@ pub struct Node {
     /// variant (the physical stroke that actually changes — see
     /// `lineflag.rs`), present only when this node has a `one_liner` text.
     pub one_liner_root: Option<String>,
+    /// True for a synthetic `##>` section grouping node that has no real
+    /// stroke of its own — the viewer skips the keyboard diagram for these.
+    pub synthetic: bool,
 }
 
 /// A named group of root-level (first-stroke) choices, in file order.
@@ -101,12 +104,33 @@ fn strip_u(seg: &str) -> Result<String, String> {
     Ok(render_stroke(&keys))
 }
 
-/// A leaf key's parent tree position: its stroke prefix for a descendant, or
-/// a synthetic per-category position for a root, so category-root grouping
-/// reuses the same bucketing as ordinary descendants.
-pub fn position(key: &str, category_label: &str) -> String {
-    key.rsplit_once('/').map_or_else(
-        || format!("cat:{category_label}"),
-        |(parent, _)| parent.to_owned(),
-    )
+/// Prefix marking a synthetic section-grouping node's key (see `position`).
+const SEC_PREFIX: &str = "sec:";
+
+/// A leaf key's parent tree position: a synthetic per-category position for a
+/// root (so category-root grouping reuses the same bucketing as ordinary
+/// descendants), a synthetic per-section position for a descendant carrying a
+/// `##>` section (so same-section siblings bucket together under their shared
+/// parent), or the bare stroke prefix otherwise.
+pub fn position(key: &str, category_label: &str, section: Option<&str>) -> String {
+    match key.rsplit_once('/') {
+        None => format!("cat:{category_label}"),
+        Some((parent, _)) => {
+            section.map_or_else(|| parent.to_owned(), |s| section_position(parent, s))
+        },
+    }
+}
+
+/// The synthetic key grouping a descendant with its same-section siblings
+/// under the shared `parent` stroke. `parent` is `/`-joined stroke text with
+/// no spaces, so the single space delimiter re-splits cleanly in
+/// [`section_parts`].
+fn section_position(parent: &str, label: &str) -> String {
+    format!("{SEC_PREFIX}{parent} {label}")
+}
+
+/// Split a section-node key back into `(parent_position, section_label)`, or
+/// `None` if `key` isn't a section key.
+pub fn section_parts(key: &str) -> Option<(&str, &str)> {
+    key.strip_prefix(SEC_PREFIX)?.split_once(' ')
 }

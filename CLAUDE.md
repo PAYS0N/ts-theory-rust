@@ -19,3 +19,4 @@ Call `target/debug/ctx-context .`. Do not skip this.
   (file) is the last resort, and multi-line is not recognized.
 - `.env` holds the summarizer key: never feed it to a model, never
   commit it.
+- The task is not done until ctx-verify passes.

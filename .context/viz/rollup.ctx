@@ -1,16 +1,16 @@
-`viz/` is a single-file static frontend for inspecting the compiled steno
-stroke tree, consumed only by a human running it in a browser against a
-locally generated `../out/viz-data.json`; it has no other contract with
-the rest of the codebase beyond that JSON shape and must be served over
-`http://`.
+`viz/` is a single-file browser tool with no build step and only one
+artifact: `index.html`. It has no internal structure to coordinate — the
+directory boundary exists purely to isolate this standalone consumer from
+the Rust compiler it visualizes.
 
-The whole subtree is `index.html.ctx` — one file, so there's no
-cross-file coupling within `viz/` itself. The coupling that matters is
-external: the bank layout constants and stroke parser here are a hand
-maintained copy of `crates/steno/src/stroke/keys.rs`, and the one-liner
-toggle semantics mirror `lineflag.rs`. Any change to canonical stroke
-layout, parsing, or one-liner/multi-line selection rules in the Rust
-crate requires a matching edit here, with nothing to enforce that
-automatically.
+Its contract with the rest of the codebase is read-only and via JSON:
+it consumes `../out/viz-data.json` (produced elsewhere by a `viz-data`
+binary) and duplicates, rather than imports, two pieces of Rust logic that
+must be watched for drift — `parse_stroke`/bank-order constants from
+`crates/steno/src/stroke/keys.rs`, and the snippet-escaping scheme from
+`crates/steno/src/snippet/mod.rs`. Any change to either of those Rust
+modules requires a matching manual edit here or the tool silently
+misrenders (wrong keyboard highlights, stray backslashes) while still
+running without error.
 
-intent_divergence: no intent.md exists for this directory.
+No intent.md exists for this directory.

@@ -1,7 +1,7 @@
 //! Serializes a [`Tree`] to the JSON shape `viz/index.html` expects:
 //! `{"categories": [{"label", "roots"}, ...], "nodes": {stroke: {"terminal",
 //! "multiLine", "oneLiner", "children", "axis", "description",
-//! "oneLinerRoot"}, ...}}`. Hand-rolled (no
+//! "oneLinerRoot", "synthetic"}, ...}}`. Hand-rolled (no
 //! `serde`, per the crate's zero-runtime-deps invariant), reusing
 //! `steno::json_string`'s escaping.
 
@@ -81,6 +81,8 @@ fn write_node(out: &mut String, key: &str, node: &Node) {
     write_opt_string(out, node.description.as_deref());
     out.push_str(", \"oneLinerRoot\": ");
     write_opt_string(out, node.one_liner_root.as_deref());
+    out.push_str(", \"synthetic\": ");
+    out.push_str(if node.synthetic { "true" } else { "false" });
     out.push('}');
 }
 

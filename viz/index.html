@@ -354,6 +354,10 @@ function selectedOptionKey(axisKey, axis) {
   return axisSelection.get(axisKey);
 }
 
+// Node shape (from out/viz-data.json): { terminal, multiLine, oneLiner,
+// children, axis, description, oneLinerRoot, synthetic }. `synthetic` marks
+// a `##>` section grouping node with no real stroke of its own.
+
 // Resolve a node key to the one whose preview/children should actually be
 // shown: itself, unless it's an axis node, in which case its selected
 // option's key (a real stroke, never itself an axis node).
@@ -413,12 +417,28 @@ function displayKey(key) {
   return idx === -1 ? currentOneLinerRoot : currentOneLinerRoot + key.slice(idx);
 }
 
+// Undo the LSP-snippet escaping the compiler applies to literal `\`, `$`,
+// and `}` (see `esc`/`push_brace` in crates/steno/src/snippet/mod.rs) so a
+// body's closing brace shows as `}` rather than `\}`. Tabstops like `${1}`
+// carry no backslash, so they pass through untouched.
+function unescapeSnippet(body) {
+  let out = "";
+  for (let i = 0; i < body.length; i++) {
+    if (body[i] === "\\" && i + 1 < body.length && "\\$}".includes(body[i + 1])) {
+      out += body[++i];
+    } else {
+      out += body[i];
+    }
+  }
+  return out;
+}
+
 // A children chip's label: the description comment if present, else a
 // short snippet derived from the rendered text, else the raw stroke
 // segment as a last resort.
 function chipLabel(key, node) {
   if (node.description) return node.description;
-  const src = node.multiLine ?? node.oneLiner ?? "";
+  const src = unescapeSnippet(node.multiLine ?? node.oneLiner ?? "");
   let s = src.startsWith("{^}") ? src.slice(3) : src;
   const nl = s.indexOf("\n");
   if (nl !== -1) s = s.slice(0, nl);
@@ -539,13 +559,17 @@ function renderPreview(resolved) {
   const box = document.createElement("div");
   box.className = "preview";
 
-  const shownKey = displayKey(resolved.key);
-  box.appendChild(renderStrokeSeq(shownKey));
+  // Synthetic section nodes have no real stroke, so there's no keyboard
+  // diagram or outline header to show — just their label/description.
+  if (!resolved.node.synthetic) {
+    const shownKey = displayKey(resolved.key);
+    box.appendChild(renderStrokeSeq(shownKey));
 
-  const header = document.createElement("div");
-  header.className = "full-stroke";
-  header.textContent = shownKey + (resolved.node.terminal ? "  (terminal)" : "  (partial)");
-  box.appendChild(header);
+    const header = document.createElement("div");
+    header.className = "full-stroke";
+    header.textContent = shownKey + (resolved.node.terminal ? "  (terminal)" : "  (partial)");
+    box.appendChild(header);
+  }
 
   if (resolved.node.description) {
     const desc = document.createElement("div");
@@ -555,7 +579,7 @@ function renderPreview(resolved) {
   }
 
   const variantKey = variantKeyFor(resolved.node);
-  const text = variantKey ? resolved.node[variantKey] : null;
+  const text = variantKey ? unescapeSnippet(resolved.node[variantKey]) : null;
   if (text) {
     const pre = document.createElement("pre");
     pre.textContent = text;
