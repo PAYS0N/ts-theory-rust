@@ -670,13 +670,74 @@ Generator<%t>
 ## custom functions
 // Custom functions
 
-````STKWR-FB
+````STKWR*PBGS
+pre-custom-func
+````
+
+###FIBonacci
+````STKWR*PBGS/TPEUB
 function fibonacci(n) {
   const sqrt5 = Math.sqrt(5);
   const phi = (1 + sqrt5) / 2;
   const psi = (1 - sqrt5) / 2;
 
   return Math.round((Math.pow(phi, n) - Math.pow(psi, n)) / sqrt5);
+}
+````
+
+###QUIcksoRT
+````STKWR*PBGS/KWEURT
+function quicksort(arr, lo = 0, hi = arr.length - 1) {
+  if (lo < hi) {
+    const p = partition(arr, lo, hi);
+    quicksort(arr, lo, p - 1);
+    quicksort(arr, p + 1, hi);
+  }
+  return arr;
+}
+
+function partition(arr, lo, hi) {
+  const randIdx = lo + Math.floor(Math.random() * (hi - lo + 1));
+  [arr[randIdx], arr[hi]] = [arr[hi], arr[randIdx]];
+
+  const pivot = arr[hi];
+  let i = lo - 1;
+  for (let j = lo; j < hi; j++) {
+    if (arr[j] <= pivot) {
+      i++;
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+  [arr[i + 1], arr[hi]] = [arr[hi], arr[i + 1]];
+  return i + 1;
+}
+````
+
+###QUIckseLecT
+````STKWR*PBGS/KWEULT
+function quickselect(arr, k, lo = 0, hi = arr.length - 1) {
+  if (lo === hi) return arr[lo];
+
+  const p = partition(arr, lo, hi);
+  if (k === p) return arr[k];
+  else if (k < p) return quickselect(arr, k, lo, p - 1);
+  else return quickselect(arr, k, p + 1, hi);
+}
+
+function partition(arr, lo, hi) {
+  const randIdx = lo + Math.floor(Math.random() * (hi - lo + 1));
+  [arr[randIdx], arr[hi]] = [arr[hi], arr[randIdx]];
+
+  const pivot = arr[hi];
+  let i = lo - 1;
+  for (let j = lo; j < hi; j++) {
+    if (arr[j] <= pivot) {
+      i++;
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+  [arr[i + 1], arr[hi]] = [arr[hi], arr[i + 1]];
+  return i + 1;
 }
 ````
 
