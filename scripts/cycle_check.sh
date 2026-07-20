@@ -19,12 +19,10 @@ fi
 
 FAIL=0
 
-# Run for each crate in the workspace. `--lib` selects the library target (the
-# package also has binary targets, which would otherwise make the selection
-# ambiguous). The `--no-fns --no-types --no-traits` flags would keep output
-# focused on module-level deps; current cargo-modules versions vary. The
-# presence of any output in `--cycles` mode is failure.
-if ! out=$(cargo modules dependencies --lib --no-externs --no-sysroot --no-uses 2>&1); then
+# Run for each crate in the workspace. The `--no-fns --no-types --no-traits`
+# flags would keep output focused on module-level deps; current cargo-modules
+# versions vary. The presence of any output in `--cycles` mode is failure.
+if ! out=$(cargo modules dependencies --no-externs --no-sysroot --no-uses 2>&1); then
     echo "FAIL: cargo modules failed:" >&2
     echo "$out" >&2
     FAIL=1

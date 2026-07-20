@@ -1,0 +1,6 @@
+# .ctxignore — summarization scope for the ctx tools (gitignore syntax).
+# Seeded once from .gitignore by ctx-scan; edit freely. This file is the
+# ONLY scope source — .gitignore is never consulted after seeding.
+# Always applied on top: target/ is excluded; secrets and binaries are
+# denied and cannot be un-ignored here.
+

@@ -84,3 +84,15 @@ crates/steno/
 - The editor is *simulated* to compile movement, never executed — this is not a
   Plover plugin or an editor. The Monaco/Playwright verification harness stays in
   the TypeScript reference repo.
+
+## Architecture
+
+<!-- BEGIN GENERATED architecture (scripts/gen_readme_architecture.sh --write) -->
+`.` is the workspace root for `crates/steno` (the theory→dictionary compiler), plus the peripheral surfaces around it: CI automation (`.github/`, `scripts/`), reference docs (`docs/`), the Neovim consumer of its snippet artifacts (`nvim/`), a browser visualization consumer (`viz/`), and the DSL source of truth (`dict.steno`) that all of them ultimately key off. Nothing at this top level executes independently — every subtree either produces, checks, consumes, or documents the pipeline defined in `crates/steno`.
+
+The load-bearing coupling threading through nearly every child is `dict.steno`'s template DSL (`%0-9`, `%d`, `%t`, `%(EXPR)`, directives like `@fuse`/`@count`/`@type`): `crates/steno`'s parser is its sole authority, `docs/steno-format.md` documents its grammar, and any change to the operator/directive set requires updating the parser, `docs/steno-format.md`, and `docs/pipeline.md` together, or those docs go stale silently. A second cross-cutting coupling is duplication-without-import: `viz/index.html` reimplements `parse_stroke`/bank-order and snippet-escaping logic from `crates/steno/src/stroke/keys.rs` and `src/snippet/mod.rs` rather than consuming them, so those Rust modules and `viz/` drift independently and only a manual check catches divergence. `nvim/` and `crates/steno`'s snippet emitter share a `"@@"` sentinel and JSON schema — same drift risk, opposite direction (Lua consumes JSON the Rust binary emits).
+
+Per-child roles from the root's perspective: `crates/steno` is the only thing that writes artifacts (via its three binaries, into `out/`); `dict.steno` is the fixture and source of truth those binaries compile and that integration tests read from disk; `docs/` is the normative but non-enforced reference for pipeline behavior; `scripts/` is CI Layer 1, gating merges on static checks against the Rust workspace; `.github/workflows/` is a separate, unrelated CI pipeline that deploys a static viz site to GitHub Pages; `nvim/` and `viz/` are both read-only downstream consumers of generated JSON, never upstream dependencies of the compiler.
+
+Invariant spanning the root: only the three `steno` binaries write files, and only under `out/` — `scripts/`, `docs/`, `nvim/`, and `viz/` are all consumers or checkers, never producers, of dictionary artifacts.
+<!-- END GENERATED architecture -->

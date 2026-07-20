@@ -11,13 +11,6 @@ yanked = "deny"
 ignore = []
 
 [licenses]
-# The crate is zero-dependency by invariant, so no license is ever encountered.
-# The allowlist is a deliberate policy for when a dependency is added; don't fail
-# the check just because its entries are (currently) unused.
-unused-allowed-license = "allow"
-# `steno` is a private, unpublished workspace crate (publish = false) with no
-# license field; skip the license check for our own private crates.
-private = { ignore = true }
 allow = [
     "MIT",
     "Apache-2.0",
