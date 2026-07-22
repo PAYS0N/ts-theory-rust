@@ -1,0 +1,13 @@
+diff --git a/split/split.h b/split/split.h
+index b5555e1..16f1f75 100644
+--- a/split/split.h
++++ b/split/split.h
+@@ -31,7 +31,7 @@ enum class SplitHandlerId {
+ };
+ 
+ enum SplitMetricId {
+-  RESET_COUNT,
++  SPLIT_RESET_COUNT,
+   TIMEOUT_COUNT,
+   MAGIC_MISMATCH_COUNT,
+   HASH_FAILURE_COUNT,

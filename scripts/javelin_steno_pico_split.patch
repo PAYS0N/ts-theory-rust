@@ -1,0 +1,13 @@
+diff --git a/pico_split.cc b/pico_split.cc
+index 2465c35..ed712df 100644
+--- a/pico_split.cc
++++ b/pico_split.cc
+@@ -223,7 +223,7 @@ void PicoSplit::SplitData::OnReceiveFailed() {
+     isConnected = false;
+     updateSendData = true;
+     retryCount = 0;
+-    metrics[SplitMetricId::RESET_COUNT]++;
++    metrics[SplitMetricId::SPLIT_RESET_COUNT]++;
+ 
+     RxBuffer::OnConnectionReset();
+     TxBuffer::OnConnectionReset();
