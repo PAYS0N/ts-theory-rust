@@ -1,0 +1,5 @@
+Applies vendored javelin-steno patches that rename `SplitMetricId::RESET_COUNT` to `SPLIT_RESET_COUNT`, resolving a symbol collision with pico-sdk's `reset_num_rp2040::RESET_COUNT` that causes compilation failures in translation units including both headers.
+
+The patches are reapplied after every upstream re-sync because both javelin-steno and javelin-steno-pico are gitignored checkouts — the rename can't persist in-tree. The script is idempotent: skips if the marker string `SPLIT_RESET_COUNT` already exists in the target file, so it's safe to run unconditionally in a build step.
+
+`apply_one <label> <tree> <patch> <marker-file>` is the core logic: checks that the tree directory exists (skips if not), verifies the patch file is tracked, then runs `git apply --check` before applying. On patch failure, exits with FAIL and emits instructions to regenerate the patch by hand, showing the git diff context. If `--check` passes but apply fails, that's a hard FAIL (indicates corruption). Success prints "OK:".

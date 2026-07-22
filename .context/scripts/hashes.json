@@ -1,17 +1,23 @@
 {
-  "hash": "4ce62e4c0e67836243acc645baa838678b1d1a24c47741b8e7557607ed0a9e5b",
+  "hash": "c2101eaf0bcc733048b97a69a6e9c3ab4d57d84872580465f73246caf9960047",
   "children": {
+    "apply_javelin_ext_patch.sh": "f:e4c92f37beee2f50fa8ff236a68b2fd2b60bc85162c399457518f7ad74ddd66e",
+    "apply_javelin_steno_split_patch.sh": "f:9db525dd6afd53d516386cb4cf3abac73d8c11c182f56e9b384702dcc354d077",
+    "build_firmware.sh": "f:0e0af848e93d483401c4f27d02c17434fcefae102c875f171fcf2b7a0a474dc7",
     "ci.sh": "f:182b00ee393e0d3ca1ef2986b4ce8b50c949b2712f4f748af3b39371cb302a08",
     "cpp_check.sh": "f:231e3d3c518beeb3cb4bafd6b23caa9424f669f185884a9d0bf854ea2542ca1e",
     "cycle_check.sh": "f:b8cc98254218a0450ac14ca334fd20e576f202099002e99e34ec1e6ca97adcda",
     "gen_readme_architecture.sh": "f:767add4806fb1862cb6d4d2981a37236a7baf398e8c1ac5095e5ba26b4c0fc6c",
     "gen_tool_contracts.sh": "f:ce425d5d0c7dad98945c94af8f9af60b958bc4849b1a5284158d6cdc28e5ebb9",
     "install-tools.sh": "f:01805a2eb29a3e8940b71d7ebe0d2a27b791dfbe9b911caed9ace75dfc1e75f8",
+    "javelin_ext_pico.patch": "f:6b9d537522fa96463ef240da5b70831b280a8aaa3ae8de2488917b31c405c53e",
+    "javelin_steno_pico_split.patch": "f:8337905d7d60b1f7048bc1474696f16373cc3a4ee20f9a0b813c9eeb8f6eb58d",
+    "javelin_steno_split.patch": "f:60d3207c48d33378b4595ce12eb6e916ec8393e17409517e8b37bbd91f9496ef",
     "machete_check.sh": "f:28bdcd70df8fd6cbcc17480e40a9f1647aac557758ed537cece9e86b61def759",
-    "no_allow_check.sh": "f:7891b90a4d396988b57505b6719f38d03ec0cf56e53db90911239d504c593943",
+    "no_allow_check.sh": "f:6d8cf7065f97888521b142d3f5022b74262bbeab78abebc9a015ad5f1fbc5b50",
     "rationale_check.py": "f:876fd70afb806fd88d622de2b5b49e07a554744438a20d37c127af40233ce97a",
     "retired_terms_check.sh": "f:8b534e66a4f907e7c54f704d8eeb62f1d90d8b958bf83603da65f0399317c074",
     "update-template.sh": "f:e19b308fff8c673aafb022aae462ac72797b609d06b07c1dc65fb19885a5de83",
-    "workspace_lints_check.sh": "f:ecfd025caf75a20dbeab3cec14524c5599f62d286787d3faa031d88e3dec43c8"
+    "workspace_lints_check.sh": "f:79dc07f3899736576322d7e56c5330e29cc01b13b51db2e82ae7fac8763e48b2"
   }
 }

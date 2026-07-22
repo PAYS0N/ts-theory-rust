@@ -3,8 +3,8 @@
 //! differential pin against `expand_dict` on the enumerable subset (D9).
 
 use steno::{
-    Construct, Entry, InfType, build_tables, check_fuse_ambiguity, expand_dict, parse_source,
-    render_filled, walk,
+    Construct, Entry, InfType, build_tables, check_fuse_ambiguity, display_text, expand_dict,
+    parse_source, render_filled, walk,
 };
 
 /// Load and parse the real programmatic corpus from the repo root.
@@ -51,6 +51,30 @@ fn walker_partial_generic_is_non_terminal() {
     let r = walk(&seg("STKWR-T/AR/AR"), &types, &constructs).expect("valid prefix");
     assert_eq!(r.text, "Array Array", "bracketless partial");
     assert!(!r.terminal, "stack depth 2 → non-terminal");
+}
+
+#[test]
+fn display_text_is_untouched_when_terminal() {
+    let (types, constructs) = tables().unwrap();
+    let done = walk(&seg("STKWR-T/AR/AR/AR/TPH"), &types, &constructs).expect("valid");
+    assert_eq!(display_text(&done), done.text, "terminal text is untouched");
+    assert_eq!(display_text(&done), "Array<Array<Array<number>>>");
+}
+
+#[test]
+fn display_text_strips_brackets_and_newlines_from_a_multi_slot_partial() {
+    let (types, constructs) = tables().unwrap();
+    // Fused return type consumed (count=2 member), no params stroked yet: still
+    // non-terminal, but the programmatic dict must show something for it — the
+    // same "in progress" convention the enumerated dict.steno path uses.
+    let partial = walk(&seg("STKWR-PBGS/TPHOL"), &types, &constructs).expect("valid prefix");
+    assert!(!partial.terminal);
+    let text = display_text(&partial);
+    assert!(
+        !text.contains(['(', ')', '[', ']', '<', '>', '{', '}']),
+        "brackets stripped: {text}"
+    );
+    assert!(!text.contains('\n'), "no newlines: {text}");
 }
 
 #[test]

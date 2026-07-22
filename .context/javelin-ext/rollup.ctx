@@ -1,26 +1,25 @@
-`javelin-ext/` is the C++ port of a Rust-generated on-device steno
-dictionary: it reconstructs outline definitions at query time by walking
-pre-compiled construct/type tables instead of storing an enumerable
-lookup table, minimizing firmware footprint. Depending on it gets you a
-`StenoDictionary`-compatible lookup (`Lookup`, `GetName`, `PrintInfo`
-stub) with no console machinery linked in.
+`javelin-ext/` implements a code-generated, obligation-stack steno
+dictionary as a drop-in replacement for the enumerable outline→definition
+dictionary format, and validates it against a Rust reference
+implementation. Depending on this subtree gets you `StenoGeneratedDictionary`,
+a `StenoDictionary` subclass whose `Lookup()` reconstructs definitions at
+query time from rule tables instead of a stored map, keeping firmware
+footprint small.
 
-The three files share one contract: `steno_generated_dictionary_data.h`
-and `steno_generated_testdata.h` (both generated elsewhere, not in this
-directory) define the wire format — CONSTRUCTS/TYPES arrays and GOLDENS —
-and all lookup and test logic assumes they're in sync with the Rust
-reference walker that produced them. `.h` declares the dictionary
-interface; `.cc` implements the obligation-stack walk against those
-tables; `test_main.cc` is the differential harness that replays GOLDENS
-through `.cc`'s `Lookup` and diffs against the Rust walker's recorded
-verdicts, run via `scripts/cpp_check.sh` with `RUN_TESTS=1` and compiled
-to an empty TU otherwise (`JAVELIN_EXT_RUN_TESTS` guard).
+The walker (`.cc`) and its public wrapper (`.h`) are tightly coupled to
+`steno_generated_dictionary_data.h` (not in this directory but generated
+alongside it): the `CONSTRUCTS`/`TYPES` arrays there define all behavior,
+so any generator change to that data changes lookup results immediately
+without touching this subtree's source. `test_main.cc` closes the loop by
+replaying golden stroke sequences (from `build-javelin`, via generated
+`steno_generated_testdata.h`) through the same `Lookup()` entry point and
+diffing against the Rust walker's recorded verdicts — this is the
+authoritative correctness check for the whole subtree, since the walker's
+64-stroke/8KB arena limits mean truncation failures are silent and only
+caught here.
 
-Invariant spanning the subtree: a lookup is valid only if the whole
-stroke sequence is consumed and a terminal construct is reached; this
-must hold identically in the C++ walker and the Rust reference, or
-test_main.cc's differential fails. Any change to the data table format
-must be mirrored in both generators and re-validated by the golden test,
-not just compiled.
-
-intent_divergence: no intent.md exists for this directory.
+Invariant spanning the subtree: `test_main.cc` is fully compiled out
+(`#if JAVELIN_EXT_RUN_TESTS`) in firmware builds, so production binaries
+never link the test harness or its `Console` stub; only `.h`/`.cc` ship.
+Both the walker and the dictionary header avoid console machinery
+entirely to preserve this.

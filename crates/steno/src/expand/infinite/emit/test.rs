@@ -7,7 +7,7 @@
 
 use std::fmt::Write as _;
 
-use super::super::walk::walk;
+use super::super::walk::{display_text, walk};
 use super::sample::sample_sequences;
 use super::{super::Construct, super::InfType, c_escape, stroke_mask};
 use crate::error::ExpandError;
@@ -49,13 +49,14 @@ fn mask_array(i: usize, seq: &[String]) -> Result<String, ExpandError> {
     ))
 }
 
-/// One `GOLDENS[]` row: the walker's text and validity for `seq`. A non-terminal
-/// or unmatched sequence is invalid and carries no text.
+/// One `GOLDENS[]` row: the walker's display text and validity for `seq`. An
+/// unmatched sequence is invalid and carries no text; a non-terminal match is
+/// still valid, carrying its bracket-stripped in-progress text (`display_text`)
+/// so the firmware shows the same "in progress" feedback the enumerated
+/// `dict.steno` path does.
 fn golden_row(i: usize, seq: &[String], types: &[InfType], constructs: &[Construct]) -> String {
-    let (text, valid) = match walk(seq, types, constructs) {
-        Some(r) if r.terminal => (r.text, true),
-        _ => (String::new(), false),
-    };
+    let (text, valid) = walk(seq, types, constructs)
+        .map_or_else(|| (String::new(), false), |r| (display_text(&r), true));
     format!(
         "  {{g{i}, {}u, \"{}\", {valid}}},\n",
         seq.len(),

@@ -8,7 +8,7 @@ mod emit;
 mod walk;
 
 pub use emit::{emit_data_header, emit_test_header};
-pub use walk::{WalkResult, render_filled, template_fragments, walk};
+pub use walk::{WalkResult, display_text, render_filled, template_fragments, walk};
 
 use std::collections::HashMap;
 

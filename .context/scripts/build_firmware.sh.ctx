@@ -1,0 +1,7 @@
+Builds the complete firmware image (javelin-steno-pico.uf2) by generating a dictionary header from Rust, applying two CMake patches to wire it into vendored C++ trees, then cross-compiling with the Arm GNU Toolchain and pico-sdk. The script orchestrates five sequential steps and is not run by CI—it requires external dependencies (toolchain, SDK paths, cloned repos) and is documented in docs/firmware-build.md.
+
+Dictionary generation runs `cargo build-javelin`, which writes to `out/steno_generated_dictionary_data.h`. Two patches must be applied afterward: `apply_javelin_ext_patch.sh` wires the dictionary into javelin-steno-pico, and `apply_javelin_steno_split_patch.sh` works around a RESET_COUNT name collision between the two vendored trees.
+
+Prerequisite checks (step 4) are hard failures: arm-none-eabi-gcc and cmake must be on PATH, PICO_SDK_PATH must be set to a cloned pico-sdk directory, and javelin-steno-pico/ must exist with a symlink at javelin-steno-pico/javelin pointing to a cloned javelin-steno. For offline builds, set `BUILD_FIRMWARE_LOCAL_PICOTOOL` to a local picotool clone; CMake would normally fetch it over the network.
+
+CMake configures with `-D JAVELIN_BOARD=polyglot` and optional picotool git URL/branch overrides, builds into `javelin-steno-pico/build/`, and the script fails if the final .uf2 is not produced.

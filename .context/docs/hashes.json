@@ -1,8 +1,9 @@
 {
-  "hash": "d39fd01bb81ff9126dbb5b79b9abc6700b4674e40b39d3b007360b092f91a10b",
+  "hash": "1613839a4d483943c153480e14904b83f52cff3b7cf325f10a928752b6da65ea",
   "children": {
-    "STATUS.md": "f:5f16cdf37c7f7e1f233ad92377f1087599396f71c548b424cc68eb23001e605a",
-    "pipeline.md": "f:6070ec52ca87278dc773d0131042e09fd160f0fb6ac33aa5754d7d7c21b9f9ed",
+    "STATUS.md": "f:69baabb7c10856d16117a504efdf5552cf426b9fa3b3380872df5574c268e907",
+    "firmware-build.md": "f:9d6b65215b16d86adc68733157ec563cd572a18a601a3a20b754e03747ddc8b5",
+    "pipeline.md": "f:665b041b47ce13f654527221d36edaac4dbfa70e7de37d7b6f334ced43b328a9",
     "steno-format.md": "f:5681047cef74b9dff10e85897898c2a0bc0ab32adca0665a79d6652abdc51b17"
   }
 }

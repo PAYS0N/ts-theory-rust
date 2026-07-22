@@ -1,0 +1,3 @@
+This file is a Neovim editor log, not source code. It contains runtime diagnostic output from a Neovim LSP session or plugin execution — likely debug traces, error messages, or event logs from the steno crate's tooling or development environment.
+
+No facts to extract; this is a build artifact or runtime dump, not a file that needs context documentation. If this is checked into version control, it should be `.gitignore`d.

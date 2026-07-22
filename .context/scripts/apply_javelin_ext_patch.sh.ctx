@@ -1,0 +1,5 @@
+Reapplies a git patch to the vendored javelin-steno-pico checkout after each clone or upstream re-sync, wiring StenoGeneratedDictionary into pico_bindings.cc's InitJavelinMaster(). The patch modifies two files (CMakeLists.txt and pico_bindings.cc) that can't live permanently in the vendored tree without being lost on the next sync from jthlim/javelin-steno-pico.
+
+Idempotent by design: skips (exits 0) if the marker string "steno_generated_dictionary" is already present in CMakeLists.txt, or if javelin-steno-pico/ doesn't exist yet (both are expected states, not failures). Fails only if the patch is tracked but missing, or if git apply --check succeeds but the actual apply fails (signals upstream drift). On clean failure, emits guidance to regenerate the patch by hand-applying the two edits and running `git -C javelin-steno-pico diff CMakeLists.txt pico_bindings.cc > scripts/javelin_ext_pico.patch`.
+
+Takes `$ROOT` as an optional first arg (defaults to `.`), requires git on PATH and expects scripts/javelin_ext_pico.patch to be present.

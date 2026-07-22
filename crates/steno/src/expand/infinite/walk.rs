@@ -19,6 +19,29 @@ pub struct WalkResult {
     pub terminal: bool,
 }
 
+/// True for any delimiter stripped from a non-terminal display, mirroring
+/// `render::is_bracket` (D9): the programmatic dictionary must agree with the
+/// enumerated `dict.steno` path on what "in progress" strokes look like.
+const fn is_bracket(ch: char) -> bool {
+    matches!(ch, '(' | ')' | '[' | ']' | '<' | '>' | '{' | '}')
+}
+
+/// The text a lookup should actually display for this result.
+///
+/// The full render when terminal, or a bracket-stripped, newline-free partial
+/// otherwise — the same "in progress" convention `render::non_terminal_text`
+/// applies to the enumerated path. The C++ port mirrors this as `StripDisplay`.
+#[must_use]
+pub fn display_text(r: &WalkResult) -> String {
+    if r.terminal {
+        return r.text.clone();
+    }
+    r.text
+        .chars()
+        .filter(|&c| !is_bracket(c) && c != '\n')
+        .collect()
+}
+
 /// One consumed top-level type: its rendered text and whether it completed.
 struct Consumed {
     /// Rendered type text (complete or bracketless partial).

@@ -1,5 +1,5 @@
-`crates/` contains a single crate, `steno`, with no other members. There's no workspace-level intent.md, so this rollup has nothing of its own to add beyond what `steno/rollup.ctx` already states in full: it's a `.steno`-dictionary compiler exposing `expand_dict`, dictionary builders, and snippet builders, backed by a strict parse→expand→render pipeline and a corpus-driven test suite tied to the root `dict.steno`.
+`crates/` is the workspace root; its single member, `steno`, is the compiler for the stroke-annotated `.steno` DSL. Depending on `crates/` currently means depending on `steno` — there is no shared library code, workspace-level abstraction, or cross-crate protocol to track here yet.
 
-Any cross-file work in this tree starts and ends inside `steno/` — there is no sibling crate to coordinate with, no shared build tooling here, and no workspace-wide invariant beyond what's already documented at the crate level.
+Nothing spans multiple children because there is only one. All coupling, invariants, and pipeline details (parse → expand → render/snippet, corpus-driven test coverage, no-panic/`Result`-based contract, canonicalized stroke text via `render_stroke`) live entirely in `steno/rollup.ctx` and should be read there rather than restated.
 
-intent_divergence: no intent.md exists at the `crates` level (or at the crate root), so no divergence can be assessed.
+No `intent.md` exists for this directory, so no divergence can be assessed.

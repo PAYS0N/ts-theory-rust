@@ -62,6 +62,38 @@ struct Consumed {
   bool complete;
 };
 
+// True for any delimiter stripped from a non-terminal display (is_bracket).
+bool IsBracket(char c) {
+  switch (c) {
+  case '(':
+  case ')':
+  case '[':
+  case ']':
+  case '<':
+  case '>':
+  case '{':
+  case '}':
+    return true;
+  default:
+    return false;
+  }
+}
+
+// In-place bracket/newline strip for a non-terminal walk's display text
+// (display_text): the programmatic dictionary must show in-progress strokes
+// the same way the enumerated dict.steno path's non-terminal entries do. Only
+// ever removes characters, so the NUL-terminated result fits in `text`'s
+// existing allocation.
+void StripDisplay(char *text) {
+  char *write = text;
+  for (char *read = text; *read; ++read) {
+    if (!IsBracket(*read) && *read != '\n') {
+      *write++ = *read;
+    }
+  }
+  *write = '\0';
+}
+
 const GenType *LookupType(uint32_t stroke) {
   for (uint32_t i = 0; i < TYPE_COUNT; ++i) {
     if (TYPES[i].stroke == stroke) {
@@ -284,13 +316,21 @@ StenoGeneratedDictionary::Lookup(const StenoDictionaryLookup &lookup) const {
 
   Arena arena;
   bool terminal = false;
-  const char *text =
-      Walk(strokes, (uint32_t)lookup.length, arena, terminal);
+  // Safe to mutate: `text` points into `arena`, which this call owns
+  // exclusively, and StripDisplay only ever shrinks the string in place.
+  char *text = const_cast<char *>(
+      Walk(strokes, (uint32_t)lookup.length, arena, terminal));
 
-  // Only a terminal walk is a complete definition; a partial outline is not a
-  // match (its verdict mirrors the walker's `terminal` flag / golden validity).
-  if (!text || !terminal) {
+  // No construct/type rule matched at all: no lookup result (mirrors the
+  // walker returning `None`).
+  if (!text) {
     return StenoDictionaryLookupResult::CreateInvalid();
+  }
+  // A non-terminal outline is still a match — shown bracket-stripped, with no
+  // newlines, the same way the enumerated dict.steno path displays in-progress
+  // strokes (display_text / golden validity).
+  if (!terminal) {
+    StripDisplay(text);
   }
   return StenoDictionaryLookupResult::CreateDup(text);
 }
