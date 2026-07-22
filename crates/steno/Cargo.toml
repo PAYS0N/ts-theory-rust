@@ -16,6 +16,10 @@ name = "build-dict"
 path = "src/bin/build_dict.rs"
 
 [[bin]]
+name = "build-javelin"
+path = "src/bin/build_javelin.rs"
+
+[[bin]]
 name = "build-nvim"
 path = "src/bin/build_nvim.rs"
 

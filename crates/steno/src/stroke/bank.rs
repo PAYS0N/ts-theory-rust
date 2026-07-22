@@ -2,7 +2,7 @@
 //! bit weights (LSB-first) so a numeric count merges into a sub-stroke as a
 //! set of keys.
 
-use super::keys::{KeySet, is_mid, is_right, parse_stroke, render_stroke};
+use super::keys::{KeySet, StrokeKeys, is_mid, is_right, parse_stroke, render_stroke};
 use crate::error::StrokeError;
 
 /// Which side of the board a count-bank key lives on.
@@ -79,6 +79,52 @@ pub fn merge_strokes(a: &str, b: &str) -> Result<String, StrokeError> {
     merge_bank(&mut ka.right, &kb.right, a, b)?;
     ka.num = ka.num || kb.num;
     Ok(render_stroke(&ka))
+}
+
+/// Subtract sub-stroke `b`'s keys from `a`, the inverse of [`merge_strokes`].
+///
+/// Because a fused stroke is a disjoint key-set union (`merge_strokes` errors
+/// on a shared key), removing the shape segment recovers the residual type
+/// stroke: `subtract_strokes("TPHFLT", "-FLT") == Some("TPH")`. Returns `None`
+/// when `b` is not a subset of `a` (so the shape did not fuse into this
+/// stroke).
+///
+/// # Errors
+/// Returns [`StrokeError`] when either side fails to parse.
+pub fn subtract_strokes(a: &str, b: &str) -> Result<Option<String>, StrokeError> {
+    let ka = parse_stroke(a)?;
+    let kb = parse_stroke(b)?;
+    if kb.num && !ka.num {
+        return Ok(None);
+    }
+    let mut out = StrokeKeys {
+        num: ka.num && !kb.num,
+        ..StrokeKeys::default()
+    };
+    // Each bank of `b` must be a subset of the same bank in `a`.
+    if !(subtract_bank(&ka.left, &kb.left, &mut out.left)
+        && subtract_bank(&ka.mid, &kb.mid, &mut out.mid)
+        && subtract_bank(&ka.right, &kb.right, &mut out.right))
+    {
+        return Ok(None);
+    }
+    Ok(Some(render_stroke(&out)))
+}
+
+/// Copy `src` keys minus `remove` keys into `dst`. Returns false when `remove`
+/// is not a subset of `src` (so the subtraction is impossible).
+fn subtract_bank(src: &KeySet, remove: &KeySet, dst: &mut KeySet) -> bool {
+    for ch in remove.keys() {
+        if !src.contains(ch) {
+            return false;
+        }
+    }
+    for ch in src.keys() {
+        if !remove.contains(ch) {
+            dst.insert(ch);
+        }
+    }
+    true
 }
 
 /// Copy `src` keys into `dst`, erroring on any key already present.

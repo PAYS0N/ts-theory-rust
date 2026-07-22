@@ -1,0 +1,65 @@
+# dict.infinite.steno — programmatic corpus for the javelin-steno extension.
+#
+# Unlike dict.steno (which is enumerated by Pass B into a flat stroke->text
+# map for Plover), this corpus is NEVER run through Pass B. Its @count families
+# and nestable generics describe a space too large to enumerate: the
+# @count AOEU function family alone has d+1 type slots for d = 0..15, an
+# O(T^s) blow-up, and Array<Array<...>> nests without bound. Instead
+# `build-javelin` renders two small tables (types + constructs) into a C++
+# header, and StenoGeneratedDictionary replays the append walk per lookup.
+#
+# Vocabulary is exactly docs/steno-format.md plus one addition: %T (D11),
+# the fuse-target type slot. See docs/pipeline.md, "The reference walker".
+
+
+## types
+# The append set. Each @type is a record in the generated type table:
+# stroke, arity, and text with %t argument markers. Nesting is unbounded
+# here (D8): a generic's argument may itself be any type, to any depth — the
+# arity-0 pool restriction that dict.steno's Pass B imposes does NOT apply.
+
+````TPH
+number
+````
+@type
+````STR
+string
+````
+@type
+````PW
+boolean
+````
+@type
+````AR
+Array<%t>
+````
+@type
+@arity 1
+````PH
+Map<%t, %t>
+````
+@type
+@arity 2
+
+
+## type emitter (deep case)
+# A standalone type emitter: base emits nothing, then append any type to any
+# depth. TKPW-T/AR/AR/AR/TPH -> Array<Array<Array<number>>>. This construct
+# is small enough that expand_dict can enumerate its shallow (pool-depth)
+# subset, so it is the pin for the walker-vs-pipeline differential test.
+````STKWR-T
+%t
+````
+
+
+## function family (wide case)
+# function %0(a: T, b: T, ...): R { }, with 0..15 params via the AOEU count
+# bank. @fuse merges the return type R (marked %T) into the shape stroke, and
+# D12 fixes the fill order: the fused return slot is stroked first (its stroke
+# is the first after the base), then each parameter slot in template order.
+# 16 construct records, not T^16 rows.
+````STKWR-PBGS/-L
+function %0(%[, |arg%d: %t%]): %T {%b%1}
+````
+@count AOEU
+@fuse

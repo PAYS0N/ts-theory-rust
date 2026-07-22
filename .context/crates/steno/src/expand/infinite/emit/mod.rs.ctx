@@ -1,0 +1,5 @@
+Renders Pass-A tables into a self-contained C++ header for javelin-ext replay dictionary (the data rules) and a companion test header pinning that dictionary to the Rust reference walker (test verdicts). No enumerated rows are emitted; data and test headers carry aggregated rules and sampled sequence verdicts respectively.
+
+`stroke_mask(stroke: &str) -> Result<u32, ExpandError>` encodes a sub-stroke into javelin's 32-bit `StenoStroke` key mask. The bit layout maps directly to javelin's `StrokeBitIndex`: `#`=0, left bank `S..R`=1–7, middle `A O * E U`=8–12, right `F R P B L G T S D Z`=13–22. The canonical key orders (`LEFT_ORDER`, `MID_ORDER`, `RIGHT_ORDER`) list keys in exactly this sequence, so a bank index becomes a contiguous bit run; `bank_bits()` sets bits by iterating those orders and applying the base offset.
+
+`c_escape(text: &str) -> String` escapes characters into C string literal bodies (no surrounding quotes): backslash and double-quote become `\\` and `\"`, newline becomes `\n`, tab becomes `\t`. Only characters the corpus produces are handled.

@@ -1,5 +1,5 @@
-`crates/` is a Cargo workspace whose sole current member is `steno`, the theory-to-dictionary compiler and its supporting tooling/tests. Depending on the workspace at this level gets you nothing beyond what `steno/` itself exports — there's no cross-crate glue, shared types, or workspace-level code to track yet.
+`crates/` contains a single crate, `steno`, with no other members. There's no workspace-level intent.md, so this rollup has nothing of its own to add beyond what `steno/rollup.ctx` already states in full: it's a `.steno`-dictionary compiler exposing `expand_dict`, dictionary builders, and snippet builders, backed by a strict parse→expand→render pipeline and a corpus-driven test suite tied to the root `dict.steno`.
 
-Any editor working here works entirely inside `steno/`; its rollup covers the pipeline staging, the corpus-coupled test suite, and the two crate-spanning invariants (editor-profile semantics, terminal-flag classification) that actually need cross-file awareness. There's nothing at the `crates/` level itself — no shared config, no sibling crate to keep in sync — so this file has no independent contract to state beyond pointing into `steno/`.
+Any cross-file work in this tree starts and ends inside `steno/` — there is no sibling crate to coordinate with, no shared build tooling here, and no workspace-wide invariant beyond what's already documented at the crate level.
 
-No `intent.md` is present for this directory, so no divergence check applies.
+intent_divergence: no intent.md exists at the `crates` level (or at the crate root), so no divergence can be assessed.

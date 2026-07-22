@@ -9,3 +9,8 @@ Cargo.lock.bak
 .context/.reports/
 
 .env
+
+javelin-steno
+pico-sdk
+javelin-steno-pico
+picotool-2.3.0

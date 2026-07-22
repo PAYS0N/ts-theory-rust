@@ -1,0 +1,7 @@
+Runs a cross-language differential test: regenerates C++ headers from `dict.infinite.steno` using the exact same emit pipeline as `build-javelin`, then shells out to `scripts/cpp_check.sh` to compile and validate them against the reference walker.
+
+Header generation happens here rather than by invoking `build-javelin` because nested `cargo run` would deadlock on the build lock. The script itself never calls cargo; it only compiles C++ and replays test data through `StenoGeneratedDictionary`.
+
+`generate_headers(root)` reads the infinite corpus, parses it, builds tables via Pass A, checks fuse ambiguity, and emits both `steno_generated_dictionary_data.h` and `steno_generated_testdata.h` into `out/`. The pipeline—parse → build_tables → check_fuse_ambiguity → emit—matches `build-javelin` exactly; drifting either side breaks the differential.
+
+`cpp_dictionary_matches_reference_walker()` regenerates headers, runs the bash script, and requires it to succeed or emit `SKIP:`. A `SKIP:` (missing C++ toolchain or upstream javelin-steno tree) passes silently because the walker logic is already fully pinned by `infinite.rs`; the C++ check is corroboration only, not the sole guardian. Any `FAIL:` or nonzero exit fails with the script's stdout and stderr attached.

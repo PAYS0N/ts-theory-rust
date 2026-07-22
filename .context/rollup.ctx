@@ -1,7 +1,32 @@
-`.` is the workspace root for `crates/steno` (the theory→dictionary compiler), plus the peripheral surfaces around it: CI automation (`.github/`, `scripts/`), reference docs (`docs/`), the Neovim consumer of its snippet artifacts (`nvim/`), a browser visualization consumer (`viz/`), and the DSL source of truth (`dict.steno`) that all of them ultimately key off. Nothing at this top level executes independently — every subtree either produces, checks, consumes, or documents the pipeline defined in `crates/steno`.
+`.` is the repo root of a Rust dictionary compiler that turns `dict.steno`
+(and the parametric `dict.infinite.steno`) into four JSON artifacts under
+`out/`, plus supporting non-Rust consumers and tooling. Depending on this
+root gets you: the `steno` crate (all compiler logic), a Neovim plugin
+(`nvim/`) and browser visualizer (`viz/`) that consume its JSON outputs,
+a C++ firmware port (`javelin-ext/`) that reimplements its lookup semantics
+independently, specification docs (`docs/`), and CI/tooling scripts
+(`scripts/`, `.github/`).
 
-The load-bearing coupling threading through nearly every child is `dict.steno`'s template DSL (`%0-9`, `%d`, `%t`, `%(EXPR)`, directives like `@fuse`/`@count`/`@type`): `crates/steno`'s parser is its sole authority, `docs/steno-format.md` documents its grammar, and any change to the operator/directive set requires updating the parser, `docs/steno-format.md`, and `docs/pipeline.md` together, or those docs go stale silently. A second cross-cutting coupling is duplication-without-import: `viz/index.html` reimplements `parse_stroke`/bank-order and snippet-escaping logic from `crates/steno/src/stroke/keys.rs` and `src/snippet/mod.rs` rather than consuming them, so those Rust modules and `viz/` drift independently and only a manual check catches divergence. `nvim/` and `crates/steno`'s snippet emitter share a `"@@"` sentinel and JSON schema — same drift risk, opposite direction (Lua consumes JSON the Rust binary emits).
+The two `.steno` source files at this level are the actual source of
+truth and are read, never generated: `dict.steno` (finite stroke→template
+entries, Pass A/B semantics) and `dict.infinite.steno` (unbounded generic
+types/functions via `@type`/`@count`/`@fuse`, replayed by a runtime walker
+rather than enumerated). Both formats are normatively defined in
+`docs/steno-format.md` and `docs/pipeline.md`; a grammar change to either
+`.steno` file requires matching updates in those docs, in `crates/steno`'s
+parser, and — for the infinite path specifically — in `javelin-ext`'s C++
+walker, which must stay bit-for-bit consistent with the Rust reference or
+its differential test fails.
 
-Per-child roles from the root's perspective: `crates/steno` is the only thing that writes artifacts (via its three binaries, into `out/`); `dict.steno` is the fixture and source of truth those binaries compile and that integration tests read from disk; `docs/` is the normative but non-enforced reference for pipeline behavior; `scripts/` is CI Layer 1, gating merges on static checks against the Rust workspace; `.github/workflows/` is a separate, unrelated CI pipeline that deploys a static viz site to GitHub Pages; `nvim/` and `viz/` are both read-only downstream consumers of generated JSON, never upstream dependencies of the compiler.
+Three independent non-Rust consumers each duplicate a slice of compiler
+behavior rather than importing it, and each is a silent-drift risk if the
+Rust side changes: `viz/index.html` duplicates stroke-parsing and
+snippet-escaping logic; `nvim/`'s Lua plugin depends on the snippet JSON
+schema from `src/snippet.ts` (the TypeScript reference, not this repo's
+Rust output); `javelin-ext/` duplicates the construct/type table walk
+algorithm. None of these are wired into `ci.sh`'s Layer 1 checks, so
+drift is not caught automatically.
 
-Invariant spanning the root: only the three `steno` binaries write files, and only under `out/` — `scripts/`, `docs/`, `nvim/`, and `viz/` are all consumers or checkers, never producers, of dictionary artifacts.
+`crates/steno` is the only thing that writes to `out/`, via the three
+binaries named in intent.md; nothing else in this tree produces build
+artifacts.

@@ -1,0 +1,3 @@
+Programmatic steno dictionary that reconstructs definitions on-the-fly by replaying obligation-stack walks over two Pass-A rule tables (loaded from steno_generated_dictionary_data.h), rather than storing enumerable outline→definition entries. This is the C++ port of a Rust reference walker and keeps on-device footprint minimal by avoiding console machinery.
+
+`Lookup(const StenoDictionaryLookup &lookup)` reconstructs the definition at query time by walking the obligation stack; it's the only substantive entry point. `GetName()` returns the dictionary's identifier. `PrintInfo()` is stubbed to prevent linking in console code.

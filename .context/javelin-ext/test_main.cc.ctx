@@ -1,0 +1,5 @@
+Differential test harness for StenoGeneratedDictionary: replays every golden stroke sequence from `build-javelin` through the generated C++ dictionary, asserting that lookup results (validity and text) match the Rust reference walker's recorded verdicts. Compiled and run by `scripts/cpp_check.sh` with `RUN_TESTS=1`; this is the C++-vs-walker side of the differential.
+
+`CheckGolden(dictionary, golden)` wraps a single test case: converts the golden's raw stroke array to `StenoStroke` objects, calls `dictionary.Lookup()`, and returns 1 if the result's validity or text differs from the golden's expectation; 0 otherwise. The golden structure specifies expected validity and text for each stroke sequence.
+
+`main()` iterates all `GOLDENS[i]` (count in `GOLDEN_COUNT`, both from generated `steno_generated_testdata.h`) and sums failures; exits 0 only if all match. Entire file is guarded by `#if JAVELIN_EXT_RUN_TESTS` — firmware builds produce an empty translation unit. `Console::PrintfInternal()` is a stub to satisfy linker references that never execute.

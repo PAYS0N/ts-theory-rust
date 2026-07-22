@@ -1,0 +1,5 @@
+Injects the generated `.context/rollup.ctx` artifact into README.md's architecture documentation block, keeping the landing prose in sync with the codebase summary. Supports `--write` (default) to update the file in place, or `--check` to verify it's current without modifying.
+
+The script uses HTML comment markers (`BEGIN GENERATED architecture` / `END GENERATED architecture`) to delimit the block in README.md; both markers must be present or the script fails. The rollup file is read raw from disk and inserted between the markers verbatim — there is no compilation or filtering step.
+
+In `--check` mode, it emits `FAIL:` lines (ctx-verify format) if the committed block doesn't match the fresh rollup; in `--write` mode, it uses `awk` to replace the marked region in place and exits silently on success. Both modes exit nonzero if `.context/rollup.ctx` or `README.md` are missing, or if markers are not found.

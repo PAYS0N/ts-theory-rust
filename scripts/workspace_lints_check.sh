@@ -54,7 +54,7 @@ for manifest in ${manifests[@]+"${manifests[@]}"}; do
         in_lints && /^[[:space:]]*workspace[[:space:]]*=[[:space:]]*true/ { found = 1 }
         END                          { exit(found ? 0 : 1) }
     ' "$manifest"; then
-        echo "FAIL: $manifest missing '[lints]\\nworkspace = true'" >&2
+        echo "FAIL: $manifest:1: missing a [lints] table with 'workspace = true'; add:  [lints]  workspace = true" >&2
         FAIL=1
     fi
 done

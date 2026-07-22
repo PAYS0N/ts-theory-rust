@@ -1,0 +1,3 @@
+Enforces that every `%N` landing point within a single template appears exactly once, catching a silent LSP snippet corruption: when a landing index repeats, the snippet deduplication in `crate::snippet::sorted_landings` collapses distinct cursor positions into one tabstop, and if that index is the template's highest, produces duplicate `${0}` (LSP's final-exit marker) in the same body.
+
+Loads the real `dict.steno` corpus as a test fixture and parses it with `parse_source`. For each entry, `collect_landings` recursively extracts all `Chunk::Landing` indices, descending into `Chunk::Repeat` bodies and separators (the only nested chunk containers). The test fails if any index appears twice in a single template's landing list, reporting the entry's line number and stroke.

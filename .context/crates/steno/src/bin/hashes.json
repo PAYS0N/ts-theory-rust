@@ -1,7 +1,8 @@
 {
-  "hash": "bcb5d0f0ea9bf3f327f970037e3b8e74bf42f94d5fc3e0002f7eceb97e0d390c",
+  "hash": "4c7c88588abf66e92c7fe5e491d8ca80874764af0bc9774d985f74879c5f042c",
   "children": {
     "build_dict.rs": "f:18dcb8fdf77d7d1f20e8a9956d8e59294ce323d3d6172722c73a3f1bef3a34d7",
+    "build_javelin.rs": "f:3a09f85a2cc36ecbd35b4ba388eb6ea726ed94dd917e2dea7972d0c9ae69fd72",
     "build_nvim.rs": "f:738367380da2cb002d052b78e8ef115d2be8f7200d385e7679855c20b5bc37db",
     "measure.rs": "f:5c0872ee3311c30726d0468076449b2dcf104d8ce8d7ced36bd9b1a8b5086cb4",
     "viz_data": "d:941fa4842aa80a71c99f15bfc5de152435f6069cf5d526f5a9ff20d3c2a8fb40"

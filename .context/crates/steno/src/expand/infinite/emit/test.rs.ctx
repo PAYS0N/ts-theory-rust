@@ -1,0 +1,5 @@
+Generates a C++ golden-test header that pins the C++ dictionary to the Rust walker's behavior. For each sampled stroke sequence, it emits the walker's rendered text and validity flag; the `javelin-ext` unit test replays these same sequences through the generated dictionary and asserts agreement.
+
+`emit_test_header(types, constructs) -> Result<String, ExpandError>` samples stroke sequences, walks each through the reference automaton, and outputs a static array of `GenGolden` structs with stroke masks, sequence lengths, expected text, and validity. The sequence sampling and walking come from `super::sample` and `super::super::walk`; if either dependency changes what sequences are generated or how they're walked, the C++ tests will catch divergence.
+
+Non-terminal and unmatched sequences are marked invalid with empty text; only terminal matches carry a text value. Stroke-to-mask encoding delegates to `stroke_mask()` and can fail with `ExpandError`. The output is pure test fixture — never consulted by a live lookup — so embedding full answer strings here does not compromise the data header's anti-cheat properties.

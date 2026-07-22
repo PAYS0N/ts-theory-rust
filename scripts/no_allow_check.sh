@@ -35,8 +35,14 @@ fi
 
 # `/dev/null` guarantees >1 path arg so grep always prefixes `file:line:`
 # (the `path:line` form ctx-verify's parser splits) even for a lone file.
+# Do not prefix `$line` with a label before emitting it — `path:line:content`
+# must stay the first thing after `FAIL:` or ctx-verify's `split_loc` misreads
+# the label as the file (see retired_terms_check.sh, which follows the same
+# rule). The suffix appended after `$line` is free-form message text: this is
+# where the "why banned / what to do" guidance belongs, since the matched
+# line alone doesn't say either.
 while IFS= read -r line; do
-    echo "FAIL: $line" >&2
+    echo "FAIL: $line -- #[allow] is banned with no exceptions (MVP has no suppression mechanism); fix the underlying lint instead of suppressing it" >&2
     FAIL=1
 done < <(grep -nE '^[[:space:]]*#!?\[allow\(' -- "${files[@]}" /dev/null || true)
 

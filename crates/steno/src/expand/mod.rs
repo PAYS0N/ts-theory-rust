@@ -6,12 +6,18 @@ mod append;
 mod counts;
 mod family;
 mod fill;
+mod infinite;
 mod lineflag;
 mod types;
 
 pub use append::{expand_types, expand_types_one};
 pub use counts::{ITERATION_BASE, expand_all, expand_counts};
 pub use family::fix_family_terminals;
+pub use infinite::{
+    Construct, InfType, WalkResult, build_constructs, build_tables, build_types,
+    check_fuse_ambiguity, emit_data_header, emit_test_header, render_filled, template_fragments,
+    walk,
+};
 pub use lineflag::expand_line_flag;
 pub use types::{TypeDef, TypeOptions, TypeSet, build_type_set};
 

@@ -3,7 +3,7 @@ Doctrine: `.context/intent.md`. Rationale:
 
 Call `target/debug/ctx-context .`. Do not skip this. 
 
-- Source: native Read/Edit/Grep — never `cat` or `grep` for file reads. The context
+- Source: native Read/Edit/Grep — never `cat` or `sed` for file reads. The context
   chain is hook-injected on read; request it on demand with
   `target/debug/ctx-context <path>` (dir or `.`), and read a directory's
   chain before changing its contents. Go only as deep as needed. Never

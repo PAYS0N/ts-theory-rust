@@ -30,8 +30,10 @@ pub use editor::{
 };
 pub use error::{ExpandError, RenderError, SnippetError, StenoError, StrokeError};
 pub use expand::{
-    ExpandedEntry, ITERATION_BASE, TypeDef, TypeOptions, TypeSet, TypedEntry, build_type_set,
-    expand_all, expand_counts, expand_dict, expand_line_flag, expand_types, expand_types_one,
+    Construct, ExpandedEntry, ITERATION_BASE, InfType, TypeDef, TypeOptions, TypeSet, TypedEntry,
+    WalkResult, build_constructs, build_tables, build_type_set, build_types, check_fuse_ambiguity,
+    emit_data_header, emit_test_header, expand_all, expand_counts, expand_dict, expand_line_flag,
+    expand_types, expand_types_one, render_filled, template_fragments, walk,
 };
 pub use json_out::{OrderedMap, json_string, to_json};
 pub use parse::{Chunk, Entry, EntryFlags, Expr, parse_source, parse_template};

@@ -13,7 +13,9 @@
 mod bank;
 mod keys;
 
-pub use bank::{CountBank, CountBit, Side, add_key, apply_count, count_bank, merge_strokes};
+pub use bank::{
+    CountBank, CountBit, Side, add_key, apply_count, count_bank, merge_strokes, subtract_strokes,
+};
 pub use keys::{
     KeySet, LEFT_ORDER, MID_ORDER, RIGHT_ORDER, StrokeKeys, parse_stroke, render_stroke,
 };

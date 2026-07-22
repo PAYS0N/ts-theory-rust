@@ -1,0 +1,46 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 159bad5..afd0c01 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -214,11 +214,18 @@ target_sources(${NAME} PUBLIC
+   javelin/word_list.cc
+   javelin/wpm_tracker.cc
+   javelin/writer.cc
++
++  ${CMAKE_CURRENT_SOURCE_DIR}/../javelin-ext/steno_generated_dictionary.cc
+ )
+ 
+-# Add the local directory so tinyusb can find tusb_config.h
++# Add the local directory so tinyusb can find tusb_config.h. Also add
++# javelin/ and ../out so javelin-ext/steno_generated_dictionary.cc's
++# unqualified includes ("str.h", "dictionary/dictionary.h",
++# steno_generated_dictionary_data.h) resolve.
+ target_include_directories(${NAME} PUBLIC
+   ${CMAKE_CURRENT_SOURCE_DIR}
++  ${CMAKE_CURRENT_SOURCE_DIR}/javelin
++  ${CMAKE_CURRENT_SOURCE_DIR}/../out
+ )
+ 
+ target_link_libraries(${NAME}
+diff --git a/pico_bindings.cc b/pico_bindings.cc
+index 24bd667..04214c6 100644
+--- a/pico_bindings.cc
++++ b/pico_bindings.cc
+@@ -19,6 +19,7 @@
+ #include "javelin/dictionary/reverse_suffix_dictionary.h"
+ #include "javelin/dictionary/unicode_dictionary.h"
+ #include "javelin/dictionary/user_dictionary.h"
++#include "../javelin-ext/steno_generated_dictionary.h"
+ #include "javelin/engine.h"
+ #include "javelin/font/monochrome/font.h"
+ #include "javelin/hal/bootloader.h"
+@@ -643,6 +644,9 @@ void InitJavelinMaster() {
+   dictionaries.Add(StenoDictionaryListEntry(userDictionary, true));
+ #endif
+ 
++  static StenoGeneratedDictionary generatedDictionary;
++  dictionaries.Add(StenoDictionaryListEntry(&generatedDictionary, true));
++
+   STENO_MAP_DICTIONARY_COLLECTION_ADDRESS->AddDictionariesToList(dictionaries);
+ 
+   dictionaries.Add(

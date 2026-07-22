@@ -1,0 +1,8 @@
+{
+  "hash": "2721aa455c89c6a0dd912ce529d121fe56b3913aec362e48ebedf528d0368183",
+  "children": {
+    "emit": "d:bd9e56ef4d7d175def461051962c147b2573c8bb433882225a2e3bd23d9c09f0",
+    "mod.rs": "f:3485dce282e5ba202b808ce0f9d886523f2b74e56a24ae35b239235c70672fab",
+    "walk.rs": "f:38d79ec28d0aec03baaf3df3492c07449c597628afddc8e76af9b7dedf2684e9"
+  }
+}

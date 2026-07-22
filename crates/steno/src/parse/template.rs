@@ -172,6 +172,7 @@ impl TemplateParser {
             _ if n.is_ascii_digit() => n.to_digit(10).map(Chunk::Landing),
             'd' => Some(Chunk::Dcount),
             't' => Some(Chunk::TypeSlot),
+            'T' => Some(Chunk::FusedTypeSlot),
             'b' => Some(Chunk::BodyBreak),
             'p' => Some(Chunk::Pattern),
             _ => None,

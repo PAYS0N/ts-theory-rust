@@ -41,6 +41,10 @@ pub enum Chunk {
     Dcount,
     /// `%t`, filled by an appended type stroke.
     TypeSlot,
+    /// `%T`, the fuse-target type slot (D11): like `%t`, but marks which slot
+    /// a `@fuse` merges into. Only meaningful in the programmatic
+    /// (`dict.infinite.steno`) corpus; the `dict.steno` path never emits it.
+    FusedTypeSlot,
     /// `%b`, the one-liner-toggleable newline.
     BodyBreak,
     /// `%p` destructuring slot.
@@ -69,6 +73,7 @@ impl Chunk {
             Self::Landing(_) => "landing",
             Self::Dcount => "dcount",
             Self::TypeSlot => "typeslot",
+            Self::FusedTypeSlot => "fusedtypeslot",
             Self::BodyBreak => "bodybreak",
             Self::Pattern => "pattern",
             Self::Repeat { .. } => "repeat",

@@ -1,0 +1,26 @@
+`javelin-ext/` is the C++ port of a Rust-generated on-device steno
+dictionary: it reconstructs outline definitions at query time by walking
+pre-compiled construct/type tables instead of storing an enumerable
+lookup table, minimizing firmware footprint. Depending on it gets you a
+`StenoDictionary`-compatible lookup (`Lookup`, `GetName`, `PrintInfo`
+stub) with no console machinery linked in.
+
+The three files share one contract: `steno_generated_dictionary_data.h`
+and `steno_generated_testdata.h` (both generated elsewhere, not in this
+directory) define the wire format — CONSTRUCTS/TYPES arrays and GOLDENS —
+and all lookup and test logic assumes they're in sync with the Rust
+reference walker that produced them. `.h` declares the dictionary
+interface; `.cc` implements the obligation-stack walk against those
+tables; `test_main.cc` is the differential harness that replays GOLDENS
+through `.cc`'s `Lookup` and diffs against the Rust walker's recorded
+verdicts, run via `scripts/cpp_check.sh` with `RUN_TESTS=1` and compiled
+to an empty TU otherwise (`JAVELIN_EXT_RUN_TESTS` guard).
+
+Invariant spanning the subtree: a lookup is valid only if the whole
+stroke sequence is consumed and a terminal construct is reached; this
+must hold identically in the C++ walker and the Rust reference, or
+test_main.cc's differential fails. Any change to the data table format
+must be mirrored in both generators and re-validated by the golden test,
+not just compiled.
+
+intent_divergence: no intent.md exists for this directory.

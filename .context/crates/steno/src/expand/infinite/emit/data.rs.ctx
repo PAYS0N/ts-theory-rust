@@ -1,0 +1,7 @@
+Generates the C++ data header for steno constructs and types — static const arrays of `GenType` and `GenConstruct` records, plus segment/fragment/fill-order backing arrays. No entry rows; those are reconstructed by `javelin-ext` at runtime. All strokes are pre-encoded to key masks so the header is ready to load as-is.
+
+Entry point is `emit_data_header(types, constructs)`, which chains `type_rows()` to emit the type table, then `construct_blocks()` to emit both per-construct backing arrays (`c{i}Base[]`, `c{i}Frags[]`, `c{i}Fill[]`) and the `CONSTRUCTS[]` table rows. Each construct row references its backing arrays by name; empty base or fill order arrays are replaced with `nullptr` pointers.
+
+Strokes encode via `stroke_mask()` (from the parent module); any encoding failure propagates as `ExpandError`. The wire format — uint32_t masks — is fixed by the C++ struct definitions in `PREAMBLE` and must stay in sync with however `javelin-ext` consumes these arrays. Shape is optional (present only for `@fuse` constructs); `hasShape` is a discriminant in the output struct.
+
+`MAX_OUTLINE_LENGTH` (24 strokes) bounds the outline length the engine offers, though the walk itself is unbounded.

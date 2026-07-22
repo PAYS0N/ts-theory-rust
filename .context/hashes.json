@@ -1,13 +1,16 @@
 {
-  "hash": "6e19a3763adf77626cba2c0f0fcfbb4dac95cff19807ba9e3b1de1b9465828da",
+  "hash": "5eaefda67becbae6bee45214c8d06ffff3126583837996603315d362ed66a5e9",
   "children": {
+    ".cagevars": "f:2c6ee68dda67dbd90397f308bf77d5abed3fbbfc985cc0c93435aa39bc60516f",
     ".github": "d:ba6ed68a5e7711681af7d8f661732ccb63feb9315b1e1d98cdc0f50e96c9812f",
     "Cargo.lock": "f:e1f2504280f1721360f6cf43a3ac9c09448fb866d4e1465ef5f9aee30dee4f37",
-    "crates": "d:a06640fab16763d4cf5f211140c91c76da517a0e6cae002dc02304b5a8d64577",
-    "dict.steno": "f:46a7807d28432b37f3bad9c475b3a790930c7e6edb5c35912599d9e1145ccca4",
-    "docs": "d:b90c88c667fd5ebcc0231948fe1e97e8cd1f9708e962a01af7b8feb54e3f2862",
+    "crates": "d:435d1c8ae771ce77385798cc8ae6143e5815c778059413b35af345e022959192",
+    "dict.infinite.steno": "f:099b100a2f1daacf7a24a8f9d0c78ad7fc6f1f5c78db8d01c1e40b63012ca9aa",
+    "dict.steno": "f:ef59c845f9b2406e0b2a154a7d49b77fc0e80f6a09acb15cb4d8a7c9d2c96ddf",
+    "docs": "d:d39fd01bb81ff9126dbb5b79b9abc6700b4674e40b39d3b007360b092f91a10b",
+    "javelin-ext": "d:70f924689f8b699c915753099a2cd6fd51a11cf42b04289298ce6ae3a363ea0f",
     "nvim": "d:1ff4a7aec86eac8fcdcb56d3a4d9d5bf596d3277826f82c52a6022969ff10380",
-    "scripts": "d:202b7441ae46740a0788e135d55d1cd3d0dcf585eaa48cf036eea8d57005041c",
+    "scripts": "d:4ce62e4c0e67836243acc645baa838678b1d1a24c47741b8e7557607ed0a9e5b",
     "viz": "d:f14a5b728b30a3542c6e8091a61147a58824ebd20974400ec32ba019f5bb15e3"
   }
 }

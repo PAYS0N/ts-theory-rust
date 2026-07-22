@@ -84,6 +84,7 @@ closer). The `%` operators:
 | `%0`–`%9` | landing | Ordered landing point. The plain profile lands the cursor on `%0`; snippets renumber every landing to tabstops (see below). |
 | `%d` | count digit | The in-scope count as a literal digit (**not** a landing), `0` included. Outside a repeat it is the total count; inside a repeat it is the 0-based iteration index. |
 | `%t` | type slot | Filled by an appended type stroke during the type-append pass. |
+| `%T` | fused type slot | Like `%t`, but marks the slot a `@fuse` merges into (D11): its stroke is folded into the base's last segment rather than appended separately, so the walker recovers it by stroke subtraction. Construct-only, and meaningful only in the programmatic `dict.infinite.steno` corpus — the `dict.steno` path never emits it (see [pipeline.md](pipeline.md), reference walker). |
 | `%b` | body break | A newline the one-liner flag can toggle: every `%b` in a translation collapses together under the one-liner variant. |
 | `%p` | pattern | Destructuring-pattern slot. |
 | `%[ sep \| body %]` | repeat | Repeat `body` once per count; `sep` is the joiner emitted *between* items, never after the last. With no `\|`, the single segment is the body and there is no separator. |

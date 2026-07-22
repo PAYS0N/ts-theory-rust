@@ -1,0 +1,7 @@
+Regenerates the tool-contracts block in documentation (CLAUDE.md) from the live `--contract` output of five binaries (ctx-context, ctx-verify, ctx-scan, ctx-cage, ctx-brief), ensuring the docs stay in sync with the code.
+
+The script operates in two modes: `--write` (default) replaces the block between HTML comment markers in each doc file, and `--check` (used by ctx-verify) exits nonzero if the committed block is stale. The block is the single source of truth for what each tool does from an agent's perspective; any contract change that doesn't regenerate the docs fails the `contracts` battery check.
+
+The five binaries must already be built and present at `target/debug/` — the script never runs cargo itself, leaving that to install-tools.sh. This design keeps the script accurate whether binaries are local workspace members (CTX repo checking itself) or external artifacts (scaffolded projects, where they aren't buildable from the repo root).
+
+The committed block is extracted with awk between `BEGIN GENERATED` and `END GENERATED` markers. In `--write` mode, a temp file holds the fresh block, then awk reconstructs each doc by skipping the old markers and content, printing the new block in its place, and preserving everything outside the markers. In `--check` mode, if the extracted block differs from the fresh one, a FAIL line is emitted.

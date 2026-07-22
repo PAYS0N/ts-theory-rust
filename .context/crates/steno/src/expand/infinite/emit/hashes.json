@@ -1,0 +1,9 @@
+{
+  "hash": "bd9e56ef4d7d175def461051962c147b2573c8bb433882225a2e3bd23d9c09f0",
+  "children": {
+    "data.rs": "f:cdbc3bad277588ce0acbfc1fc6b31b2458ccf6929768dd1caec2892ebea4b192",
+    "mod.rs": "f:48abb25baaaed500afcb117ca083332e38734755d36baf62c5d9da5e497b57ea",
+    "sample.rs": "f:9b97c42332a7ccd34eda42306b62f6f0f82782e6983423d86a17e6d7af95833e",
+    "test.rs": "f:69c68c65c95b253dba7daa7ffbdf22c65ec4e5fc8ac39e588bfc2de0aeeb04f8"
+  }
+}

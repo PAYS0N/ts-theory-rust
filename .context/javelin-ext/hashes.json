@@ -1,0 +1,8 @@
+{
+  "hash": "70f924689f8b699c915753099a2cd6fd51a11cf42b04289298ce6ae3a363ea0f",
+  "children": {
+    "steno_generated_dictionary.cc": "f:997b24b8c8004d01beeb4c866d2e01007901a06c7ef071d5083105509ba4906b",
+    "steno_generated_dictionary.h": "f:5551849a7bed8c33867e3fdf34dc96020a6d28390e16a86a3fed69bded09fba6",
+    "test_main.cc": "f:e71eb75e9340870e5941336dbcaa6313bc33f27dd4c9454b7c79d8b99c79502b"
+  }
+}
