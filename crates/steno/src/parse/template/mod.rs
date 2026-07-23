@@ -3,6 +3,8 @@
 use super::Chunk;
 use crate::error::StenoError;
 
+mod blocks;
+
 /// Parse a single template string into chunks. `line` is the 1-based source
 /// line of the template's first line (used in error messages).
 ///
@@ -183,58 +185,5 @@ impl TemplateParser {
             return Ok(());
         }
         self.take_block_operator(n, acc)
-    }
-
-    /// Consume a `%[` repeat or `%(` computed opener; anything else is an
-    /// unknown operator.
-    fn take_block_operator(&mut self, n: char, acc: &mut ChunkAcc) -> Result<(), StenoError> {
-        match n {
-            '[' => {
-                self.i += 2;
-                let repeat = self.parse_repeat()?;
-                acc.push(repeat);
-                Ok(())
-            },
-            '(' => {
-                self.i += 2;
-                let computed = self.parse_computed()?;
-                acc.push(computed);
-                Ok(())
-            },
-            _ => Err(self.fail(&format!("unknown operator %{n}"))),
-        }
-    }
-
-    /// Parse a repeat after its `%[` is consumed. The first segment stops on
-    /// a top-level `|` or `%]`; without a `|` the single segment is the body.
-    fn parse_repeat(&mut self) -> Result<Chunk, StenoError> {
-        let (first, stop) = self.parse_chunks(true, true)?;
-        if stop == Stop::Pipe {
-            let (body, _) = self.parse_chunks(false, true)?;
-            return Ok(Chunk::Repeat { sep: first, body });
-        }
-        Ok(Chunk::Repeat {
-            sep: Vec::new(),
-            body: first,
-        })
-    }
-
-    /// Parse a computed landing after its `%(` is consumed.
-    fn parse_computed(&mut self) -> Result<Chunk, StenoError> {
-        let mut expr = String::new();
-        while let Some(c) = self.peek(0) {
-            if c == ')' {
-                break;
-            }
-            expr.push(c);
-            self.i += 1;
-        }
-        if self.peek(0) != Some(')') {
-            return Err(self.fail("unterminated %( ... )"));
-        }
-        self.i += 1;
-        let parsed = super::expr::parse_expr(&expr)
-            .ok_or_else(|| self.fail(&format!("bad computed expression \"{expr}\"")))?;
-        Ok(Chunk::Computed(parsed))
     }
 }

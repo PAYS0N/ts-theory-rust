@@ -88,36 +88,11 @@ crates/steno/
 ## Architecture
 
 <!-- BEGIN GENERATED architecture (scripts/gen_readme_architecture.sh --write) -->
-`.` is the repo root of a Rust dictionary compiler that turns `dict.steno`
-(and the parametric `dict.infinite.steno`) into four JSON artifacts under
-`out/`, plus supporting non-Rust consumers and tooling. Depending on this
-root gets you: the `steno` crate (all compiler logic), a Neovim plugin
-(`nvim/`) and browser visualizer (`viz/`) that consume its JSON outputs,
-a C++ firmware port (`javelin-ext/`) that reimplements its lookup semantics
-independently, specification docs (`docs/`), and CI/tooling scripts
-(`scripts/`, `.github/`).
+`.` is the workspace root for a stroke-annotated `.steno` DSL compiler, its firmware integration, and its visualization/editor consumers. Owning this directory means owning the pipeline: `dict.steno` (and `dict.infinite.steno` for the C++ path) as source of truth, `crates/steno` as the sole compiler, `scripts/` as the only sanctioned way to run CI/build/patch steps, and `docs/` as the (code-subordinate) spec for the format those two agree on.
 
-The two `.steno` source files at this level are the actual source of
-truth and are read, never generated: `dict.steno` (finite stroke→template
-entries, Pass A/B semantics) and `dict.infinite.steno` (unbounded generic
-types/functions via `@type`/`@count`/`@fuse`, replayed by a runtime walker
-rather than enumerated). Both formats are normatively defined in
-`docs/steno-format.md` and `docs/pipeline.md`; a grammar change to either
-`.steno` file requires matching updates in those docs, in `crates/steno`'s
-parser, and — for the infinite path specifically — in `javelin-ext`'s C++
-walker, which must stay bit-for-bit consistent with the Rust reference or
-its differential test fails.
+The cross-cutting coupling to track: `dict.steno`'s template-operator grammar (`%d`, `%t`, `%(EXPR)`, `@fuse`, etc.) is normatively described in `docs/steno-format.md`, implemented in `crates/steno`, and its `@fuse`/type-emitter subset is independently reimplemented for the infinite dictionary's C++ walker in `javelin-ext/`, validated against the Rust reference by `scripts/cpp_check.sh` and `javelin-ext/test_main.cc`'s golden-stroke replay. A grammar change touches all four. Separately, `viz/index.html` and `nvim/` both consume generated JSON artifacts (`out/viz-data.json`, snippet tables) without importing Rust code, so `crates/steno`'s stroke-rendering and snippet-escaping logic has two silent-drift duplicates to watch.
 
-Three independent non-Rust consumers each duplicate a slice of compiler
-behavior rather than importing it, and each is a silent-drift risk if the
-Rust side changes: `viz/index.html` duplicates stroke-parsing and
-snippet-escaping logic; `nvim/`'s Lua plugin depends on the snippet JSON
-schema from `src/snippet.ts` (the TypeScript reference, not this repo's
-Rust output); `javelin-ext/` duplicates the construct/type table walk
-algorithm. None of these are wired into `ci.sh`'s Layer 1 checks, so
-drift is not caught automatically.
+Each child's role: `crates/` is the actual compiler; `dict.steno`/`dict.infinite.steno` are the two source-of-truth corpora (enumerable vs. programmatic); `javelin-ext/` and `scripts/` together own the firmware differential-test loop; `docs/` documents the format and pipeline invariants; `nvim/` and `viz/` are downstream consumers; `.github/` deploys the viz site.
 
-`crates/steno` is the only thing that writes to `out/`, via the three
-binaries named in intent.md; nothing else in this tree produces build
-artifacts.
+Two `.ctx` files under `docs/` and `.github/` already flag missing/absent intent checks at their level; at the root, the described structure matches `intent.md`'s stated scope (four JSON artifacts, Rust reimplementation of the TS compiler, Plover + Neovim consumers) with no contradiction observed.
 <!-- END GENERATED architecture -->

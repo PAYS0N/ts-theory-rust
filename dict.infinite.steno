@@ -30,8 +30,51 @@ string
 boolean
 ````
 @type
-````AR
-Array<%t>
+````TPHR
+null
+````
+@type
+@noarg
+````TK
+undefined
+````
+@type
+@noarg
+````STPHR
+never
+````
+@type
+@noarg
+````TKPW
+bigint
+````
+@type
+````SPH
+symbol
+````
+@type
+````SR
+void
+````
+@type
+````STKPWHR
+any
+````
+@type
+````TPWH
+unknown
+````
+@type
+````SKP
+
+````
+@type
+````SKPWR
+object
+````
+@type
+````PR
+Promise<%t>
 ````
 @type
 @arity 1
@@ -40,6 +83,36 @@ Map<%t, %t>
 ````
 @type
 @arity 2
+````KR
+Record<%t, %t>
+````
+@type
+@arity 2
+````ST
+Set<%t>
+````
+@type
+@arity 1
+````R
+Array<%t>
+````
+@type
+@arity 1
+````WR
+Error
+````
+@type
+````TP
+function
+````
+@type
+@noarg
+````SKWR
+Generator<%t>
+````
+@type
+@arity 1
+
 
 
 ## type emitter (deep case)
@@ -58,8 +131,66 @@ Map<%t, %t>
 # D12 fixes the fill order: the fused return slot is stroked first (its stroke
 # is the first after the base), then each parameter slot in template order.
 # 16 construct records, not T^16 rows.
-````STKWR-PBGS/-L
-function %0(%[, |arg%d: %t%]): %T {%b%1}
+````STKWR-PBGS
+function %0(%[, |%(d+1): %t%]): %T {%b%<0>}
+````
+@count AOEU
+@fuse
+
+
+###deFauLT
+````STKWR-PBGS/-FLT
+function %0(%[, |%(d+1): %t%]): %T {%b%<0>}
+````
+@count AOEU
+@fuse
+###aRrow Typed
+````STKWR-PBGS/-RT
+(%[, |%(d): %t%]): %T => %<0>
+````
+@count AOEU
+@fuse
+###aRrow Typed with newline
+````STKWR-PBGS/*RT
+(%[, |%(d): %t%]): %T => {
+	return%<0>
+}
+````
+@count AOEU
+@fuse
+###Method
+````STKWR-PBGS/-PL
+%0(%[, |%(d+1): %t%]): %T {%b%<0>}
+````
+@count AOEU
+@fuse
+###asyNc
+````STKWR-PBGS/-PB
+async function %0(%[, |%(d+1): %t%]): Promise<%T> {%b%<0>}
+````
+@count AOEU
+@fuse
+###yeilD
+````STKWR-PBGS/-D
+function* %0(%[, |%(d+1): %t%]): Generator<%T> {%b%<0>}
+````
+@count AOEU
+@fuse
+###iiFe
+````STKWR-PBGS/-F
+(function %0(%[, |%(d+1): %t%]): %T {%b%(d+1)})(%<0>);
+````
+@count AOEU
+@fuse
+###consRuCTor
+````STKWR-PBGS/-RBGT
+constructor(%[, |%(d): %t%]) {%b%<0>}
+````
+@count AOEU
+@fuse
+###SeT
+````STKWR-PBGS/-FT
+set %0(%[, |%(d+1): %t%]) {%b%<0>}
 ````
 @count AOEU
 @fuse

@@ -3,8 +3,12 @@
 //! Each `@count` entry fans out to one expanded entry per count value
 //! (0..=bank.max): the bank keys are merged into the stroke, the
 //! `%[ sep | body %]` repeat is run `count` times, and `%d` / `%(EXPR)` are
-//! resolved. Entries without `@count` pass through unchanged. Type-slots
-//! (`%t`), body-breaks (`%b`), braces and landings are left for later passes.
+//! resolved. Entries without `@count` pass through with only their
+//! literal-emitting operators unresolved. Type-slots (`%t`), body-breaks
+//! (`%b`), and braces are left for later passes; existing `%N` landings are
+//! left as-is, but `%<N>` end-landings are resolved here (in both the
+//! `@count` and non-`@count` paths) into concrete `%N` landings, since doing
+//! so requires knowing the fully repeat-resolved landing count.
 //!
 //! Scope of `d`: total count outside a repeat, iteration index inside one.
 //! The iteration index is 0-based ([`ITERATION_BASE`]) — a one-line knob.
@@ -58,6 +62,49 @@ fn resolve(chunks: &[Chunk], scope_d: u32, total: u32) -> Result<Vec<Chunk>, Exp
     Ok(out)
 }
 
+/// Total landing slots once `%<N>`s in `chunks` are counted alongside any
+/// existing `%N` landings (mirrors `fill.rs`'s `with_free_type`, which does
+/// the same "one past the max" arithmetic for the free-type tabstop).
+fn total_landings(chunks: &[Chunk]) -> Result<u32, ExpandError> {
+    let max_existing = chunks
+        .iter()
+        .filter_map(|c| match c {
+            Chunk::Landing(n) => Some(*n),
+            _ => None,
+        })
+        .max();
+    let end_count = u32::try_from(
+        chunks
+            .iter()
+            .filter(|c| matches!(c, Chunk::EndLanding(_)))
+            .count(),
+    )
+    .map_err(|_| ExpandError::new("template has too many %<N> end landings to count"))?;
+    Ok(max_existing.map_or(0, |m| m + 1) + end_count)
+}
+
+/// Resolve `%<N>` end-landings against the landing count already present in
+/// a fully repeat/computed-resolved template. Runs after [`resolve`] in both
+/// `fan_out` and `pass_through`, since `%<N>` needs no `@count`/repeat to be
+/// meaningful.
+fn resolve_end_landings(chunks: Vec<Chunk>) -> Result<Vec<Chunk>, ExpandError> {
+    let total = total_landings(&chunks)?;
+    chunks
+        .into_iter()
+        .map(|c| match c {
+            Chunk::EndLanding(n) => {
+                let idx = total.checked_sub(1).and_then(|t| t.checked_sub(n));
+                idx.map(Chunk::Landing).ok_or_else(|| {
+                    ExpandError::new(format!(
+                        "%<{n}> resolves before enough landings exist (only {total} total)"
+                    ))
+                })
+            },
+            other => Ok(other),
+        })
+        .collect()
+}
+
 /// Expand one entry over its count bank (or pass through if it has no
 /// `@count`).
 ///
@@ -88,7 +135,7 @@ fn pass_through(entry: &Entry, uses: bool) -> Result<Vec<ExpandedEntry>, ExpandE
     }
     Ok(vec![ExpandedEntry {
         stroke: entry.stroke_raw.clone(),
-        template: entry.template.clone(),
+        template: resolve_end_landings(entry.template.clone())?,
         count: None,
         source: entry.clone(),
     }])
@@ -110,7 +157,7 @@ fn fan_out(entry: &Entry, spec: &str) -> Result<Vec<ExpandedEntry>, ExpandError>
         segs.push(&merged);
         out.push(ExpandedEntry {
             stroke: segs.join("/"),
-            template: resolve(&entry.template, d, d)?,
+            template: resolve_end_landings(resolve(&entry.template, d, d)?)?,
             count: Some(d),
             source: entry.clone(),
         });

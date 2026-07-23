@@ -90,6 +90,48 @@ fn negative_computed_landing_errors() {
     assert!(err.to_string().contains("< 0"));
 }
 
+/// `%<0>` lands after a repeat's computed landings, at a few count values.
+#[test]
+fn end_landing_after_repeat_computed_landings() {
+    let src = "````STKWR-PBGS/-FLT\nname %0(%[, |%(d+1)%]) {%<0>}\n````\n@count AOEU";
+    let ex = expand_counts(&one(src).unwrap()).unwrap();
+
+    // 0 params -> body lands right after the name, at %1 (nothing else to skip)
+    assert_eq!(show(&at(&ex, 0).unwrap().template), "name %0() {%1}");
+
+    // 1 param -> param takes %1, body moves to %2
+    assert_eq!(show(&at(&ex, 1).unwrap().template), "name %0(%1) {%2}");
+
+    // 3 params -> params take %1..%3, body moves to %4 (one past the last)
+    assert_eq!(
+        show(&at(&ex, 3).unwrap().template),
+        "name %0(%1, %2, %3) {%4}"
+    );
+}
+
+/// `%<N>` resolving before enough landings exist is a hard error.
+#[test]
+fn end_landing_underflow_errors() {
+    let err = expand_counts(&one("````STKWR-FP\n%<5>\n````").unwrap()).unwrap_err();
+    assert!(
+        err.to_string()
+            .contains("resolves before enough landings exist")
+    );
+}
+
+/// Two `%<N>`s in the same template both resolve against the same total
+/// landing count, regardless of which one is written first: whichever
+/// position holds `%<0>` always gets the highest index, and `%<1>` the next
+/// one down.
+#[test]
+fn two_end_landings_resolve_order_independently() {
+    let ex = expand_counts(&one("````STKWR-FP\n{%<1>, %0, %<0>}\n````").unwrap()).unwrap();
+    assert_eq!(show(&ex.first().unwrap().template), "{%1, %0, %2}");
+
+    let ex2 = expand_counts(&one("````STKWR-BGS\n{%<0>, %0, %<1>}\n````").unwrap()).unwrap();
+    assert_eq!(show(&ex2.first().unwrap().template), "{%2, %0, %1}");
+}
+
 /// A non-count entry passes through unchanged.
 #[test]
 fn non_count_entry_passes_through() {

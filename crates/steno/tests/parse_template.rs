@@ -168,3 +168,42 @@ fn template_errors() {
         );
     }
 }
+
+/// `%<N>` end landings parse into `Chunk::EndLanding`.
+#[test]
+fn end_landings() {
+    assert_eq!(
+        parse_template("%<0>", 1).unwrap(),
+        vec![Chunk::EndLanding(0)]
+    );
+    assert_eq!(
+        parse_template("%<12>", 1).unwrap(),
+        vec![Chunk::EndLanding(12)]
+    );
+    assert_eq!(
+        parse_template("{%<0>}", 1).unwrap(),
+        vec![
+            Chunk::Brace { open: true },
+            Chunk::EndLanding(0),
+            Chunk::Brace { open: false },
+        ]
+    );
+}
+
+/// Malformed end landings report the offending construct.
+#[test]
+fn end_landing_errors() {
+    let cases = [
+        ("%<", "unterminated %< ... >"),
+        ("%<>", "empty end landing"),
+        ("%<abc>", "bad end landing"),
+        ("%<3", "unterminated %< ... >"),
+    ];
+    for (src, needle) in cases {
+        let err = parse_template(src, 1).unwrap_err();
+        assert!(
+            err.to_string().contains(needle),
+            "template {src}: expected {needle:?} in {err}"
+        );
+    }
+}

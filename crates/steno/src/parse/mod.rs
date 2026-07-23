@@ -58,6 +58,9 @@ pub enum Chunk {
     },
     /// `%(EXPR)` computed landing point.
     Computed(Expr),
+    /// `%<N>` end landing: resolves post-repeat to (total landing count) - 1
+    /// - `N`. `N=0` is the last landing.
+    EndLanding(u32),
 }
 
 impl Chunk {
@@ -78,6 +81,7 @@ impl Chunk {
             Self::Pattern => "pattern",
             Self::Repeat { .. } => "repeat",
             Self::Computed(_) => "computed",
+            Self::EndLanding(_) => "endlanding",
         }
     }
 }

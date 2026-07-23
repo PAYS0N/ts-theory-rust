@@ -89,9 +89,11 @@ closer). The `%` operators:
 | `%p` | pattern | Destructuring-pattern slot. |
 | `%[ sep \| body %]` | repeat | Repeat `body` once per count; `sep` is the joiner emitted *between* items, never after the last. With no `\|`, the single segment is the body and there is no separator. |
 | `%(EXPR)` | computed landing | A computed landing point. `EXPR` is linear in `d` (the in-scope count); it resolves to a landing index at expansion time. Negative results are an error; there is no renumbering, so a resolved conflict is an error. |
+| `%<N>` | end landing | Landing placed at (total landing count in the fully resolved template) − 1 − `N`. `N=0` is the last landing point, `N=1` the second-to-last, etc. Resolved after `%[...%]`/`%d`/`%(EXPR)` in the same entry, so it counts every landing already present plus every other `%<N>` in the template. Negative resolution (not enough landings) is an error. |
 
-`%[` must be closed by `%]`; `%(` must be closed by `)`. Both unterminated forms,
-and an unknown `%x` operator, are errors carrying the source line and column.
+`%[` must be closed by `%]`; `%(` must be closed by `)`; `%<` must be closed by
+`>`. All three unterminated forms, and an unknown `%x` operator, are errors
+carrying the source line and column.
 
 ### Escapes
 
