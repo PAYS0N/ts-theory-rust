@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Assemble the canonical "tool contracts" doc block from each binary's own
-# `--contract` output, and either write it into the docs (`--write`) or
-# verify the committed docs still match (`--check`, used by ctx-verify).
+# `--use`/`--audience` output, and either write it into the docs
+# (`--write`) or verify the committed docs still match (`--check`, used by
+# ctx-verify).
 #
-# The single source of truth is the binary: each of ctx-context /
-# ctx-verify / ctx-scan / ctx-cage prints a one-paragraph agent-facing
-# contract under `--contract`. A contract change that doesn't regenerate
+# The single source of truth is the binary: each agent-audience tool
+# (checked via `--audience`) prints its resident one-line dispatch entry
+# under `--use`. A contract/use/audience change that doesn't regenerate
 # the docs fails the `contracts` battery check — the doc block cannot
 # drift from the code, symmetric with how the repo treats every other
 # "must". Never hand-edit the block between the markers.
@@ -34,13 +35,15 @@ END='<!-- END GENERATED tool-contracts -->'
 # scripts/gen_tool_contracts.sh here: a cloned project has a single
 # CLAUDE.md and no template/ dir, and its README.md documents the
 # project itself, not the CTX tooling — it should never carry this
-# block. Keep this DOCS line as the one deliberate difference between
-# the two copies; update-template.sh still overwrites everything else
-# in this file unconditionally on every sync.
+# block, so there is no full-contract block here at all, only the
+# agent-audience dispatch lines. Keep this DOCS line as the one
+# deliberate difference between the two copies; update-template.sh still
+# overwrites everything else in this file unconditionally on every sync.
 DOCS=(CLAUDE.md)
 
 BIN_DIR="target/debug"
 FAIL=0
+BINS=(ctx-context ctx-verify ctx-scan ctx-cage ctx-brief ctx-status)
 
 # Emit a FAIL line (check mode) or die (write mode) with a message.
 fail_or_die() {
@@ -53,13 +56,13 @@ fail_or_die() {
     fi
 }
 
-# The five contract-bearing binaries must already be built and present at
+# The six contract-bearing binaries must already be built and present at
 # $BIN_DIR. This script never invokes cargo itself — install-tools.sh is
 # the sole build/install step (see its own header comment), so this stays
 # accurate whether these binaries are local workspace members (the CTX
 # repo checking itself) or artifacts copied in from elsewhere (a
 # scaffolded project, where they aren't buildable from $ROOT at all).
-for bin in ctx-context ctx-verify ctx-scan ctx-cage ctx-brief; do
+for bin in "${BINS[@]}"; do
     if [[ ! -x "$BIN_DIR/$bin" ]]; then
         fail_or_die "$BIN_DIR/$bin: not found or not executable — run install-tools.sh (or, in the CTX repo itself, cargo build) first"
     fi
@@ -68,20 +71,18 @@ if [[ "$FAIL" -ne 0 ]]; then
     exit $FAIL
 fi
 
-# Assemble the generated block into $BLOCK.
-one_contract() {
-    local bin="$1" label="$2"
-    local text
-    text="$("$BIN_DIR/$bin" --contract)"
-    printf -- '- **%s** — %s\n' "$label" "$text"
+# Render one `- **name** — <probe output>` line for `$bin`'s `$flag` probe.
+one_line() {
+    local bin="$1" flag="$2"
+    printf -- '- **%s** — %s\n' "$bin" "$("$BIN_DIR/$bin" "$flag")"
 }
 
 BLOCK="$BEGIN"$'\n'
-BLOCK+="$(one_contract ctx-context ctx-context)"$'\n'
-BLOCK+="$(one_contract ctx-verify ctx-verify)"$'\n'
-BLOCK+="$(one_contract ctx-scan ctx-scan)"$'\n'
-BLOCK+="$(one_contract ctx-cage ctx-cage)"$'\n'
-BLOCK+="$(one_contract ctx-brief ctx-brief)"$'\n'
+for bin in "${BINS[@]}"; do
+    audience="$("$BIN_DIR/$bin" --audience)"
+    [[ "$audience" == "human" ]] && continue
+    BLOCK+="$(one_line "$bin" --use)"$'\n'
+done
 BLOCK+="$END"
 
 # Extract the committed block (markers inclusive) from a doc, or empty.

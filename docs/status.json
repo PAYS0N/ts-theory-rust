@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "task": "add ability to skip Array<> typing when in %t for static mode",
+    "description": "there are many different protocols for type management due to space constraints; minimum add the task title, but also ideally create some standardization.",
+    "impact": "high",
+    "difficulty": "easy/medium"
+  },
+  {
+    "id": 2,
+    "task": "add things like [number, number]",
+    "description": "just finding a stroke system for this",
+    "impact": "medium",
+    "difficulty": "easy"
+  },
+  {
+    "id": 3,
+    "task": "unify fuse treatment",
+    "description": "%T (fuse-target type slot) and its C++ profile-renderer integration now exist for the programmatic (`dict.infinite.steno`) path; the static `dict.steno` path's `@fuse` still resolves without `%T` (see steno-format.md) — remaining work is deciding whether/how to bring `%T` to the static side",
+    "impact": "medium",
+    "difficulty": "medium"
+  },
+  {
+    "id": 4,
+    "task": "menu to select dict type",
+    "description": "add a set of menuing strokes that ask questions about the setup (in a 'press { enter' and ask \"did the brace autoclose?\") and navigate to the correct dict",
+    "impact": "low",
+    "difficulty": "hard"
+  }
+]
