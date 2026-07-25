@@ -23,7 +23,7 @@ index 159bad5..afd0c01 100644
  
  target_link_libraries(${NAME}
 diff --git a/pico_bindings.cc b/pico_bindings.cc
-index 24bd667..04214c6 100644
+index 24bd667..72aac50 100644
 --- a/pico_bindings.cc
 +++ b/pico_bindings.cc
 @@ -19,6 +19,7 @@
@@ -34,12 +34,17 @@ index 24bd667..04214c6 100644
  #include "javelin/engine.h"
  #include "javelin/font/monochrome/font.h"
  #include "javelin/hal/bootloader.h"
-@@ -643,6 +644,9 @@ void InitJavelinMaster() {
+@@ -643,6 +644,14 @@ void InitJavelinMaster() {
    dictionaries.Add(StenoDictionaryListEntry(userDictionary, true));
  #endif
  
-+  static StenoGeneratedDictionary generatedDictionary;
-+  dictionaries.Add(StenoDictionaryListEntry(&generatedDictionary, true));
++  static StenoGeneratedPlainDictionary generatedPlainDictionary;
++  static StenoGeneratedSmartDictionary generatedSmartDictionary;
++  static StenoGeneratedSnippetDictionary generatedSnippetDictionary;
++  dictionaries.Add(StenoDictionaryListEntry(&generatedPlainDictionary, true));
++  dictionaries.Add(StenoDictionaryListEntry(&generatedSmartDictionary, true));
++  dictionaries.Add(
++      StenoDictionaryListEntry(&generatedSnippetDictionary, true));
 +
    STENO_MAP_DICTIONARY_COLLECTION_ADDRESS->AddDictionariesToList(dictionaries);
  

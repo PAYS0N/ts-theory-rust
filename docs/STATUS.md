@@ -9,5 +9,5 @@ impact band.
 | fix vim bug and prevent it from happening again | 'snippet has multiple 0 tabstops' for .entries | high | easy |
 | add ability to skip Array<> typing when in %t | there are many different protocols for type management due to space constraints; minimum add the task title, but also ideally create some standardization. | high | easy/medium |
 | add things like [number, number] | just finding a stroke system for this | medium | easy |
-| unify fuse treatment | the c++ dict will have a new %T; that should be integrated into the static dicts eventually | medium | medium |
+| unify fuse treatment | %T (fuse-target type slot) and its C++ profile-renderer integration now exist for the programmatic (`dict.infinite.steno`) path; the static `dict.steno` path's `@fuse` still resolves without `%T` (see steno-format.md) — remaining work is deciding whether/how to bring `%T` to the static side | medium | medium |
 | menu to select dict type | add a set of menuing strokes that ask questions about the setup (in a 'press { enter' and ask "did the brace autoclose?") and navigate to the correct dict | low | hard |

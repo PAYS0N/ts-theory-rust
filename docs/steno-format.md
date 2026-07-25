@@ -95,6 +95,17 @@ closer). The `%` operators:
 `>`. All three unterminated forms, and an unknown `%x` operator, are errors
 carrying the source line and column.
 
+### `@fuse` / `%T` fill order in the infinite corpus
+
+`%T`'s D11 marking (above) is the programmatic `dict.infinite.steno` corpus's
+addition to `@fuse`, per that file's header comment: a multi-slot construct
+needs to say *which* slot the fuse absorbs, since a bare `@fuse` (as used in
+the enumerated `dict.steno` path) only makes sense when there's exactly one
+type slot to fold into. D12 fixes the resulting fill order — the fused slot's
+type is stroked **first**, immediately after the base, then the remaining
+`%t` slots fill in template order (see [pipeline.md](pipeline.md), "`@fuse`
+and `%T`").
+
 ### Escapes
 
 A backslash escapes the next character:

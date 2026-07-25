@@ -1,6 +1,6 @@
 //! Assemble the two nvim build artifacts from rendered [`SnippetEntry`]s.
 
-use super::{SENTINEL_CLOSE, SENTINEL_OPEN, SnippetEntry, render_snippet};
+use super::{SnippetEntry, render_snippet, wrap_inline_body};
 use crate::error::SnippetError;
 use crate::expand::TypedEntry;
 use crate::json_out::OrderedMap;
@@ -8,10 +8,11 @@ use crate::json_out::OrderedMap;
 /// Both nvim artifacts built from the typed entries.
 pub struct SnippetBuild {
     /// Plover dictionary: stroke → either a plain `{^}...{^}` partial
-    /// (non-terminal) or a sentinel-wrapped token the nvim plugin expands
-    /// (terminal).
+    /// (non-terminal) or a sentinel-wrapped inline LSP body the nvim plugin
+    /// expands directly (terminal).
     pub plover_keys: OrderedMap,
-    /// Snippet table: terminal `key_id` → LSP body.
+    /// Snippet table: terminal `key_id` → LSP body, kept for debug/inspection
+    /// only — the Plover value itself now carries the body inline.
     pub snippets: OrderedMap,
     /// Strokes that mapped to two different values.
     pub collisions: Vec<String>,
@@ -33,8 +34,9 @@ fn insert_non_terminal(
     plover_keys.insert(key_id, value);
 }
 
-/// Insert a terminal's sentinel-wrapped token and its snippet body, flagging
-/// a collision if `key_id` already mapped to a different body.
+/// Insert a terminal's sentinel-wrapped inline value and its snippet body
+/// (kept for debug/inspection), flagging a collision if `key_id` already
+/// mapped to a different body.
 fn insert_terminal(
     plover_keys: &mut OrderedMap,
     snippets: &mut OrderedMap,
@@ -48,9 +50,9 @@ fn insert_terminal(
     // Plover inserts a space before a translation with no `{^}` glue;
     // without it, every expanded token would land one space off from
     // whatever precedes it in the code.
-    let token = format!("{{^}}{SENTINEL_OPEN}{key_id}{SENTINEL_CLOSE}{{^}}");
+    let value = wrap_inline_body(&body);
     snippets.insert(key_id.clone(), body);
-    plover_keys.insert(key_id, token);
+    plover_keys.insert(key_id, value);
 }
 
 /// Build both artifacts from the typed entries.

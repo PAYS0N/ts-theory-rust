@@ -1,7 +1,9 @@
-Generates the C++ data header for steno constructs and types — static const arrays of `GenType` and `GenConstruct` records, plus segment/fragment/fill-order backing arrays. No entry rows; those are reconstructed by `javelin-ext` at runtime. All strokes are pre-encoded to key masks so the header is ready to load as-is.
+Generates the C++ data header for the javelin engine, emitting `const` arrays for the type table and construct metadata. Strokes are pre-encoded to key masks (no parsing at load); entry rows are omitted — the javelin-ext walk reconstructs them.
 
-Entry point is `emit_data_header(types, constructs)`, which chains `type_rows()` to emit the type table, then `construct_blocks()` to emit both per-construct backing arrays (`c{i}Base[]`, `c{i}Frags[]`, `c{i}Fill[]`) and the `CONSTRUCTS[]` table rows. Each construct row references its backing arrays by name; empty base or fill order arrays are replaced with `nullptr` pointers.
+`emit_data_header(types, constructs) -> Result<String, ExpandError>` produces the complete header: PREAMBLE, type rows, per-construct backing arrays (base masks, template ops, fill order), the CONSTRUCTS table, and MAX_OUTLINE_LENGTH. Returns an error if any stroke fails to encode via `stroke_mask`.
 
-Strokes encode via `stroke_mask()` (from the parent module); any encoding failure propagates as `ExpandError`. The wire format — uint32_t masks — is fixed by the C++ struct definitions in `PREAMBLE` and must stay in sync with however `javelin-ext` consumes these arrays. Shape is optional (present only for `@fuse` constructs); `hasShape` is a discriminant in the output struct.
+Each construct gets three static arrays: `c{i}Base[]` (base-segment key masks, omitted if empty), `c{i}Ops[]` (template ops rendered via `op_initializer`), and `c{i}Fill[]` (fill order indices, omitted if empty). The CONSTRUCTS row references these and includes base length, shape mask (or 0 if no shape), op count, and slot count.
 
-`MAX_OUTLINE_LENGTH` (24 strokes) bounds the outline length the engine offers, though the walk itself is unbounded.
+`op_initializer(op)` renders a single `GenOp` with designated initializer for the union: `{.text = "..."}` for TEXT, `{.landing = n}` for LANDING, empty `{}` for SLOT and NEWLINE. Template ops come from `template_ops(template)`, which is called fresh for each construct.
+
+The PREAMBLE struct definitions are load-bearing: GenOp's union saves 4 bytes per op by sharing TEXT and LANDING storage; this is critical — op arrays are the largest flash contribution, and the image must fit under STENO_CONFIG_BLOCK_ADDRESS.

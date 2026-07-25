@@ -3,9 +3,27 @@
 //! differential pin against `expand_dict` on the enumerable subset (D9).
 
 use steno::{
-    Construct, Entry, InfType, build_tables, check_fuse_ambiguity, display_text, expand_dict,
-    parse_source, render_filled, walk,
+    Chunk, Construct, Entry, InfType, Profile, build_tables, check_fuse_ambiguity, expand_dict,
+    parse_source, render_plain, render_walk, walk,
 };
+
+/// Flatten a resolved walk template to plain text for test readability:
+/// landings drop out (there is no board cursor in a flat string) — the real
+/// render/snippet code is what actually consumes them, and that is what
+/// `render_walk` in the differential test below pins.
+fn flat_text(template: &[Chunk]) -> String {
+    template
+        .iter()
+        .map(|c| match c {
+            Chunk::Lit(s) => s.clone(),
+            Chunk::Brace { open: true } => "{".to_owned(),
+            Chunk::Brace { open: false } => "}".to_owned(),
+            Chunk::Newline | Chunk::BodyBreak => "\n".to_owned(),
+            Chunk::Tab => "\t".to_owned(),
+            _ => String::new(),
+        })
+        .collect()
+}
 
 /// Load and parse the real programmatic corpus from the repo root.
 fn corpus() -> Option<Vec<Entry>> {
@@ -48,7 +66,7 @@ fn walker_deep_nesting_is_unbounded() {
     // Array<%t> is stroke "R" (renamed from "AR" when the corpus grew its
     // type table).
     let r = walk(&seg("STKWR-T/R/R/R/TPH"), &types, &constructs).expect("valid");
-    assert_eq!(r.text, "Array<Array<Array<number>>>");
+    assert_eq!(flat_text(&r.template), "Array<Array<Array<number>>>");
     assert!(r.terminal);
 }
 
@@ -56,20 +74,19 @@ fn walker_deep_nesting_is_unbounded() {
 fn walker_partial_generic_is_non_terminal() {
     let (types, constructs) = tables().unwrap();
     let r = walk(&seg("STKWR-T/R/R"), &types, &constructs).expect("valid prefix");
-    assert_eq!(r.text, "Array Array", "bracketless partial");
+    assert_eq!(flat_text(&r.template), "Array Array", "bracketless partial");
     assert!(!r.terminal, "stack depth 2 → non-terminal");
 }
 
 #[test]
-fn display_text_is_untouched_when_terminal() {
+fn terminal_walk_flattens_to_full_text() {
     let (types, constructs) = tables().unwrap();
     let done = walk(&seg("STKWR-T/R/R/R/TPH"), &types, &constructs).expect("valid");
-    assert_eq!(display_text(&done), done.text, "terminal text is untouched");
-    assert_eq!(display_text(&done), "Array<Array<Array<number>>>");
+    assert_eq!(flat_text(&done.template), "Array<Array<Array<number>>>");
 }
 
 #[test]
-fn display_text_strips_brackets_and_newlines_from_a_multi_slot_partial() {
+fn non_terminal_plain_strips_brackets_and_newlines() {
     let (types, constructs) = tables().unwrap();
     // Fused return type consumed (count=2 member, shape "-FLT" — the corpus's
     // ###deFauLT variant, renamed from the old bare "-L" shape), no params
@@ -78,22 +95,26 @@ fn display_text_strips_brackets_and_newlines_from_a_multi_slot_partial() {
     // dict.steno path uses.
     let partial = walk(&seg("STKWR-PBGS/TPHOFLT"), &types, &constructs).expect("valid prefix");
     assert!(!partial.terminal);
-    let text = display_text(&partial);
+    let plain = render_walk(&partial, Profile::Plain).expect("plain");
+    // `{^}`/`{^ ^}` are Plover's own cursor/glue control syntax, unconditionally
+    // wrapped around every non-terminal Plain render (ADR-1/2) — not type
+    // syntax, so they're excluded from the leaked-bracket check below.
+    let type_syntax = plain.replace("{^}", "").replace("{^ ^}", "");
     assert!(
-        !text.contains(['(', ')', '[', ']', '<', '>', '{', '}']),
-        "brackets stripped: {text}"
+        !type_syntax.contains(['(', ')', '[', ']', '<', '>', '{', '}']),
+        "type brackets stripped: {plain}"
     );
-    assert!(!text.contains('\n'), "no newlines: {text}");
+    assert!(!plain.contains('\n'), "no newlines: {plain}");
 }
 
 #[test]
 fn walker_map_arity_two() {
     let (types, constructs) = tables().unwrap();
     let done = walk(&seg("STKWR-T/PH/TPH/STR"), &types, &constructs).expect("valid");
-    assert_eq!(done.text, "Map<number, string>");
+    assert_eq!(flat_text(&done.template), "Map<number, string>");
     assert!(done.terminal);
     let partial = walk(&seg("STKWR-T/PH/TPH"), &types, &constructs).expect("valid");
-    assert_eq!(partial.text, "Map number");
+    assert_eq!(flat_text(&partial.template), "Map number");
     assert!(!partial.terminal);
 }
 
@@ -106,7 +127,10 @@ fn walker_fused_function_family_wide() {
     // rather than a literal "arg%d" prefix, so filled params render as bare
     // ": <type>" — this is an intended template change, not a regression.
     let r = walk(&seg("STKWR-PBGS/TPHOFLT/TPH/STR"), &types, &constructs).expect("valid");
-    assert_eq!(r.text, "function (: number, : string): number {}");
+    assert_eq!(
+        flat_text(&r.template),
+        "function (: number, : string): number {\n}"
+    );
     assert!(r.terminal);
 }
 
@@ -115,7 +139,7 @@ fn walker_fused_zero_params() {
     let (types, constructs) = tables().unwrap();
     // count=0: shape -FLT; return string fused → STR-FLT; no params.
     let r = walk(&seg("STKWR-PBGS/STR-FLT"), &types, &constructs).expect("valid");
-    assert_eq!(r.text, "function (): string {}");
+    assert_eq!(flat_text(&r.template), "function (): string {\n}");
     assert!(r.terminal);
 }
 
@@ -125,7 +149,7 @@ fn walker_fused_return_generic() {
     // count=0, return Array<number>: R (renamed from AR) fused into -FLT →
     // R-FLT, then TPH fills the generic arg.
     let r = walk(&seg("STKWR-PBGS/R-FLT/TPH"), &types, &constructs).expect("valid");
-    assert_eq!(r.text, "function (): Array<number> {}");
+    assert_eq!(flat_text(&r.template), "function (): Array<number> {\n}");
     assert!(r.terminal);
     // Missing the generic arg: non-terminal.
     let partial = walk(&seg("STKWR-PBGS/R-FLT"), &types, &constructs).expect("valid prefix");
@@ -198,11 +222,16 @@ fn walker_matches_expand_dict_on_enumerable_subset() {
     for te in &rows {
         let strokes = seg(&te.stroke);
         let w = walk(&strokes, &types, &constructs).expect("walker rejected an enumerable stroke");
-        let expected = render_filled(&te.template, &[]);
-        assert_eq!(w.text, expected, "text mismatch on {}", te.stroke);
         assert_eq!(
             w.terminal, te.terminal,
             "terminal mismatch on {}",
+            te.stroke
+        );
+        let from_walk = render_walk(&w, Profile::Plain).expect("walk plain");
+        let from_static = render_plain(te).expect("static plain").1;
+        assert_eq!(
+            from_walk, from_static,
+            "plain render mismatch on {}",
             te.stroke
         );
     }

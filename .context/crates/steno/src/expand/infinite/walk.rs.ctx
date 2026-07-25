@@ -1,9 +1,0 @@
-This walker replays the type-append logic that Pass B would enumerate — matching a stroke sequence against construct bases, then filling construct type slots by consuming type strokes in a fixed order. No enumeration occurs; cost scales linearly with input strokes.
-
-The walker is the reference implementation (criterion 3) and must render identically to the C++ port and the enumerated `dict.steno` path. The "in progress" convention mirrors `render::non_terminal_text` and `render::is_bracket` exactly: `is_bracket` here must stay in sync with that function, or lookups will display differently for partial completions (D9). Similarly, `template_fragments` and `render_filled` implement the exact slot-fill interleaving that `build-javelin` emits — any divergence breaks parity with the C++ replay.
-
-`walk(strokes, types, constructs) -> Option<WalkResult>` is the entry point: it matches the stroke sequence head against each construct's base (choosing highest specificity), extracts residual type strokes, then calls `walk_construct` to fill slots in the construct's `fill_order` (D12). Returns `None` if no base matches or extra strokes remain.
-
-`consume_type(ts, pos, types)` recursively consumes one complete type from the stroke list, advancing `pos`, and returns `Consumed { text, complete }`. It stops and marks `complete: false` if strokes run out mid-obligation; `partial(t, args)` renders the bracketless form (e.g., `Array` or `Map number`). `render_type(text, args)` substitutes args into `%t` markers in template order.
-
-`match_base(c, strokes, types)` validates that `strokes` begins with the construct's base, optionally followed by a shape-subtracted residual stroke (looked up in the type table to confirm it's valid). Returns `(specificity_score, residual_type_strokes)` or `None`; specificity is `base_len * 2` for shape-less constructs, `base_len * 2 + 1` with shape.

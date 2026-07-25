@@ -5,9 +5,10 @@
 
 use std::fmt::Write as _;
 
-use super::super::{Construct, InfType, template_fragments};
+use super::super::{Construct, InfType, TemplateOp, template_ops};
 use super::{c_escape, stroke_mask};
 use crate::error::ExpandError;
+use crate::parse::Chunk;
 
 /// A generous cap on outline length reported to the engine. The walk itself is
 /// unbounded (D8); this only bounds how many strokes the engine offers.
@@ -70,7 +71,7 @@ fn construct_blocks(constructs: &[Construct]) -> Result<(String, String), Expand
     Ok((arrays, rows))
 }
 
-/// The three backing arrays (base masks, surface fragments, fill order) for one
+/// The three backing arrays (base masks, template ops, fill order) for one
 /// construct. An empty base or fill order is elided in favour of `nullptr`.
 fn construct_arrays(i: usize, c: &Construct) -> Result<String, ExpandError> {
     let mut out = String::new();
@@ -81,15 +82,7 @@ fn construct_arrays(i: usize, c: &Construct) -> Result<String, ExpandError> {
             base_masks(c)?
         );
     }
-    let frags: Vec<String> = template_fragments(&c.template)
-        .iter()
-        .map(|f| format!("\"{}\"", c_escape(f)))
-        .collect();
-    let _ = writeln!(
-        out,
-        "static const char *const c{i}Frags[] = {{{}}};",
-        frags.join(", ")
-    );
+    out.push_str(&ops_array(i, &c.template));
     if !c.fill_order.is_empty() {
         let order: Vec<String> = c.fill_order.iter().map(|k| format!("{k}u")).collect();
         let _ = writeln!(
@@ -99,6 +92,30 @@ fn construct_arrays(i: usize, c: &Construct) -> Result<String, ExpandError> {
         );
     }
     Ok(out)
+}
+
+/// One `GenOp` initializer for a template op. The second element initializes
+/// `GenOp`'s anonymous union: designated for the ops that carry a payload,
+/// empty (`text = nullptr`) for the ops that carry none.
+fn op_initializer(op: &TemplateOp) -> String {
+    match op {
+        TemplateOp::Text(s) => format!("{{OP_TEXT, {{.text = \"{}\"}}}}", c_escape(s)),
+        TemplateOp::Slot => "{OP_SLOT, {}}".to_owned(),
+        TemplateOp::Landing(n) => format!("{{OP_LANDING, {{.landing = {n}u}}}}"),
+        TemplateOp::Newline => "{OP_NEWLINE, {}}".to_owned(),
+    }
+}
+
+/// The `c{i}Ops[]` backing array line for one construct's template.
+fn ops_array(i: usize, template: &[Chunk]) -> String {
+    let rendered: Vec<String> = template_ops(template).iter().map(op_initializer).collect();
+    let mut out = String::new();
+    let _ = writeln!(
+        out,
+        "static const GenOp c{i}Ops[] = {{{}}};",
+        rendered.join(", ")
+    );
+    out
 }
 
 /// The comma-joined base-segment key masks of a construct.
@@ -127,8 +144,9 @@ fn construct_row(i: usize, c: &Construct) -> Result<String, ExpandError> {
         Some(s) => ("true", stroke_mask(s)?),
         None => ("false", 0),
     };
+    let op_count = template_ops(&c.template).len();
     Ok(format!(
-        "  {{{base}, {}u, {has_shape}, 0x{shape_mask:06X}u, c{i}Frags, {fill}, {}u}},\n",
+        "  {{{base}, {}u, {has_shape}, 0x{shape_mask:06X}u, c{i}Ops, {op_count}u, {fill}, {}u}},\n",
         c.base.len(),
         c.slots.len(),
     ))
@@ -152,13 +170,33 @@ struct GenType {
   const char *text; // literal with %t argument markers
 };
 
+static const uint8_t OP_TEXT = 0u;
+static const uint8_t OP_SLOT = 1u;
+static const uint8_t OP_LANDING = 2u;
+static const uint8_t OP_NEWLINE = 3u;
+
+// `text` and `landing` are mutually exclusive — a TEXT op has no landing index
+// and a LANDING op no surface bytes — so they share storage: 8 bytes per op on
+// the device rather than 12. Read only the member `kind` selects. The saving is
+// load-bearing, not cosmetic: the op arrays are the single largest thing this
+// header contributes to firmware flash, and the image has to fit under
+// STENO_CONFIG_BLOCK_ADDRESS (see scripts/flash_extent_check.sh).
+struct GenOp {
+  uint8_t kind;        // 0=TEXT 1=SLOT 2=LANDING 3=NEWLINE
+  union {
+    const char *text;  // TEXT only
+    uint32_t landing;  // LANDING only
+  };
+};
+
 struct GenConstruct {
-  const uint32_t *base;          // baseLength segment masks, or nullptr
+  const uint32_t *base;      // baseLength segment masks, or nullptr
   uint32_t baseLength;
-  bool hasShape;                 // true for a @fuse construct
-  uint32_t shape;                // fuse shape mask (valid iff hasShape)
-  const char *const *fragments;  // slotCount + 1 surface fragments
-  const uint8_t *fillOrder;      // slotCount slot indices, or nullptr
+  bool hasShape;             // true for a @fuse construct
+  uint32_t shape;            // fuse shape mask (valid iff hasShape)
+  const GenOp *ops;          // opCount template ops, in template order
+  uint32_t opCount;
+  const uint8_t *fillOrder;  // slotCount slot indices, or nullptr
   uint32_t slotCount;
 };
 

@@ -106,10 +106,14 @@ corrects that by backspacing exactly what it last typed; if the nvim plugin had
 already rewritten that text into a snippet body, Plover's backspace count would
 no longer match the buffer and the correction would eat whatever precedes it.
 Only a terminal — a completed construct, never itself extended by a later
-stroke — is safe to hand to the nvim plugin. `build_snippets` emits two maps:
+stroke — is safe to hand to the nvim plugin. `build_snippets` emits
 `plover-keys` (stroke → either a plain `{^}…{^}` partial for a non-terminal, or
-a `{^}@@…@@{^}` sentinel-wrapped token for a terminal) and `snippets` (terminal
-`key_id` → LSP body).
+a `{^}@@<Plover-escaped LSP body>@@{^}` sentinel-wrapped **inline body** for a
+terminal, real newlines encoded as `INLINE_NEWLINE` so the sentinel span
+survives Plover's own `\n`-means-Enter typing) and, for debug/inspection only,
+`snippets` (terminal `key_id` → LSP body). The nvim plugin expands the
+captured inline body directly and never loads or looks up `snippets.json`
+(ADR-2, [DECISIONS.md](DECISIONS.md)).
 
 ### `@literal` blocks — `blocks.rs`
 
@@ -146,24 +150,46 @@ tables instead of enumerating Pass B:
 Enumerating Pass B here would cost `O(Tˢ)` (types `T`, slots `s`) and still not
 reach unbounded nesting. The tables are finite; the fan-out moves to lookup time.
 
-### The reference walker — `expand/infinite/walk.rs`
+### The reference walker — `expand/infinite/walk/`
 
-`walk` reconstructs a definition from the two tables at lookup time, driven by an
-**obligation stack** rather than a row table. It picks the most specific
-construct whose base is a stroke prefix (longer or fused = higher score), then
-consumes the residual strokes: appending an arity-N type pushes N argument
-obligations, and each later type stroke discharges the innermost one. A sequence
-is **terminal** iff every construct slot is filled and no obligation remains;
-one that runs out mid-obligation renders a bracketless partial and reports
-`terminal = false`. Cost is proportional to the strokes pressed, and nesting
-depth is unbounded.
+`walk` (`walk/mod.rs`, with stroke-consumption in `walk/consume.rs` and
+obligation-stack operations in `walk/ops.rs`) reconstructs a definition from
+the two tables at lookup time, driven by an **obligation stack** rather than a
+row table. It picks the most specific construct whose base is a stroke prefix
+(longer or fused = higher score), then consumes the residual strokes:
+appending an arity-N type pushes N argument obligations, and each later type
+stroke discharges the innermost one. A sequence is **terminal** iff every
+construct slot is filled and no obligation remains; one that runs out
+mid-obligation renders a bracketless partial and reports `terminal = false`.
+Cost is proportional to the strokes pressed, and nesting depth is unbounded.
 
-This walker is the semantic pin: on any sequence both can express, it must
-render the same text *and* terminal flag as `expand_dict`'s Pass B +
-`fix_family_terminals`. The C++ port in `javelin-ext/` is in turn pinned to this
-walker by the differential test (`scripts/cpp_check.sh`, driven under `cargo
-test` by `crates/steno/tests/cpp_check.rs`). A silent divergence corrupts output,
-so the agreement is enforced by test, not asserted.
+The walker's output, `WalkResult`, carries a resolved `Vec<Chunk>` template —
+not flat text — so `render_walk(&WalkResult, Profile)` renders it through the
+same `render_plain`/`render_smart`/`render_snippet` the enumerated
+`dict.steno` path uses, for all three profiles (plain, smart, nvim). This is
+the semantic pin: on any sequence both can express, `render_walk` must
+produce the same text *and* terminal flag as `expand_dict`'s Pass B +
+`fix_family_terminals`. The C++ port in `javelin-ext/` is in turn pinned to
+this walker by the differential test (`scripts/cpp_check.sh`, driven under
+`cargo test` by `crates/steno/tests/cpp_check.rs`), which pins **three**
+profile strings per golden (`GenGolden.plain`/`.smart`/`.nvim`) rather than
+one flat string. A silent divergence corrupts output, so the agreement is
+enforced by test, not asserted.
+
+### The C++ data header — op-list, not flat fragments
+
+`build-javelin`'s data header stores each construct as a per-construct
+**op-list** (`GenOp`: `TEXT`/`SLOT`/`LANDING`/`NEWLINE`) instead of flat
+surface-text fragments, mirroring the `Vec<Chunk>` the Rust walker resolves.
+Landings and newlines have to survive into the header as their own ops,
+rather than be pre-baked into a fragment string, because they're load-bearing
+for movement (plain/smart cursor placement) and tabstop numbering (nvim) —
+flattening them early would discard exactly the information the profile
+renderers need. `StenoGeneratedDictionary{Plain,Smart,Snippet}` are three
+subclasses sharing this one op-list header and one walk, each replaying the
+op-list through its own profile to reproduce plain movement, smart
+closer-dropping, and nvim tabstops on-device: the C++-side mirror of
+`render_walk`'s three Rust profiles.
 
 ### `@fuse` and `%T` — multi-slot semantics
 

@@ -14,11 +14,57 @@ use crate::error::SnippetError;
 use crate::expand::TypedEntry;
 use crate::parse::Chunk;
 
-/// Sentinel pair wrapping the keyset token Plover types (so the plugin can find
-/// it without colliding with ordinary text). Keep in sync with the nvim plugin.
+/// Sentinel pair wrapping the inline LSP body Plover types (so the plugin can
+/// find it without colliding with ordinary text). Keep in sync with the nvim
+/// plugin.
 pub const SENTINEL_OPEN: &str = "@@";
 /// Closing sentinel (see [`SENTINEL_OPEN`]).
 pub const SENTINEL_CLOSE: &str = "@@";
+
+/// Stand-in for a real newline inside an inline nvim body embedded between the sentinels.
+///
+/// Plover's own translation format treats a literal `\n` atom as "press
+/// Enter" (see `editor::serialize::push_escaped_char`) — reusing it here
+/// would split the Plover-typed `@@...@@` span across buffer lines before the
+/// nvim plugin ever sees it. This marker types as inert text; the plugin
+/// swaps it back for a real newline before expanding. Keep in sync with the
+/// nvim plugin.
+pub const INLINE_NEWLINE: &str = "\u{2424}";
+
+/// Escape an LSP snippet body for inline embedding inside a Plover `{^}...{^}` value.
+///
+/// A literal backslash is doubled so Plover reproduces it verbatim instead of
+/// interpreting the next character as one of Plover's own escapes; structural
+/// braces get Plover's own `\{`/`\}` escape (so Plover's own typing resolves
+/// them back to literal characters instead of parsing a command group — see
+/// `editor::serialize::push_escaped_char`); and real newlines become
+/// [`INLINE_NEWLINE`].
+fn plover_inline_escape(body: &str) -> String {
+    let mut out = String::new();
+    for ch in body.chars() {
+        match ch {
+            '\\' => out.push_str("\\\\"),
+            '{' => out.push_str("\\{"),
+            '}' => out.push_str("\\}"),
+            '\n' => out.push_str(INLINE_NEWLINE),
+            _ => out.push(ch),
+        }
+    }
+    out
+}
+
+/// Wrap a terminal's rendered LSP body as the unified inline nvim value.
+///
+/// Plover glue, the sentinel-wrapped, Plover-escaped body, glue again. The
+/// nvim plugin expands the captured body directly — no `snippets.json`
+/// lookup.
+#[must_use]
+pub fn wrap_inline_body(body: &str) -> String {
+    format!(
+        "{{^}}{SENTINEL_OPEN}{}{SENTINEL_CLOSE}{{^}}",
+        plover_inline_escape(body)
+    )
+}
 
 /// True for any delimiter stripped from a non-terminal partial.
 const fn is_bracket(ch: char) -> bool {

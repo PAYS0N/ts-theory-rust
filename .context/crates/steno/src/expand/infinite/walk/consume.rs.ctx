@@ -1,0 +1,5 @@
+Consumes one type (possibly nested) from a stroke sequence during infinite-type expansion, returning rendered text and a completion flag.
+
+`consume_type(ts, pos, types)` parses a single type starting at `pos` in the stroke array `ts` by looking it up in `types`, then recursively consumes its arguments (determined by `t.arity`). It advances `*pos` as it consumes and returns `Some(Consumed)` unless a stroke isn't a valid type name. If the stroke sequence runs out before all arguments are consumed, it short-circuits with `complete = false` and a bracketless partial form (e.g., "Array" or "Map number") rather than continuing to consume. Only when all arguments are recursively complete does it render the full type text by substituting argument strings into `%t` markers and return `complete = true`.
+
+`render_type(text, args)` splits `text` on `%t`, interleaving placeholders with corresponding args from the list. `partial(t, args)` produces the bracketless form by taking everything before the first `<` in the type definition and appending args space-separated. `lookup(stroke, types)` finds a type record by exact stroke match.

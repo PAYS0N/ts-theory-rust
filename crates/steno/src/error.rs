@@ -118,6 +118,14 @@ impl fmt::Display for RenderError {
 
 impl Error for RenderError {}
 
+impl From<RenderError> for ExpandError {
+    /// `render_walk` reuses the plain/smart renderers directly; their errors
+    /// surface as expansion errors with the same message.
+    fn from(e: RenderError) -> Self {
+        Self::new(e.to_string())
+    }
+}
+
 /// Error from the snippet renderer: an unresolved chunk reaching it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SnippetError {
@@ -141,3 +149,11 @@ impl fmt::Display for SnippetError {
 }
 
 impl Error for SnippetError {}
+
+impl From<SnippetError> for ExpandError {
+    /// `render_walk` reuses the snippet renderer directly; its errors surface
+    /// as expansion errors with the same message.
+    fn from(e: SnippetError) -> Self {
+        Self::new(e.to_string())
+    }
+}

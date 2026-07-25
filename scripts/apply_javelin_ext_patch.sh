@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Apply scripts/javelin_ext_pico.patch to the vendored javelin-steno-pico
-# checkout, wiring StenoGeneratedDictionary (javelin-ext/) into the real
-# firmware dictionary list built in pico_bindings.cc's InitJavelinMaster().
+# checkout, wiring the three StenoGeneratedDictionary profile classes
+# (javelin-ext/) into the real firmware dictionary list built in
+# pico_bindings.cc's InitJavelinMaster().
 #
 # javelin-steno-pico/ is vendored and gitignored (re-synced from
 # jthlim/javelin-steno-pico), so the two edits captured in the patch can't

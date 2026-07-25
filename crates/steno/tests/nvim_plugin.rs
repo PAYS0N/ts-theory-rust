@@ -76,20 +76,20 @@ fn assert_lua_ok(lua: &str) -> Result<(), String> {
     ))
 }
 
-/// A terminal snippet with a single body-break before the exit tabstop:
-/// `if(${1}) {\n${0}\}`.
+/// A terminal body with a single body-break before the exit tabstop:
+/// `if(${1}) {\n${0}\}`, carried inline in the `@@…@@` token per ADR-2 (no
+/// `snippets.json`, no fixture — the token's interior IS the encoded body).
 const IF_SNIPPET_LUA: &str = r#"
 local M = require("steno-ts")
-local fixture = vim.fn.tempname() .. ".json"
-local fd = assert(io.open(fixture, "w"))
-fd:write(vim.json.encode({ ["STKWR-F"] = "if(${1}) {\n${0}\\}" }))
-fd:close()
-
-M.setup({ snippets_path = fixture, filetypes = {} })
+M.setup({ filetypes = {} })
 vim.bo.filetype = "typescript"
 
-vim.api.nvim_buf_set_lines(0, 0, -1, false, { "@@STKWR-F@@" })
-vim.api.nvim_win_set_cursor(0, { 1, #"@@STKWR-F@@" })
+-- INLINE_NEWLINE (U+2424) encodes the body's single real newline.
+local NL = vim.fn.nr2char(0x2424)
+local token = "@@if(${1}) {" .. NL .. "${0}\\}@@"
+
+vim.api.nvim_buf_set_lines(0, 0, -1, false, { token })
+vim.api.nvim_win_set_cursor(0, { 1, #token })
 M._try_expand()
 
 local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
@@ -114,26 +114,22 @@ fn terminal_snippet_places_exit_tabstop_before_closing_brace() {
 
 /// Mirrors a real corpus shape (e.g. a nested generic like `Promise<%t>`
 /// appended onto another type slot): the shorter chord's non-terminal
-/// partial ("PARTIAL") has no dictionary entry here at all — per the fixed
-/// `build_snippets` contract, only terminals are sentinel-wrapped, so
-/// Plover types it as plain literal text and the plugin never touches it.
-/// When the chord extends to the terminal, Plover corrects by backspacing
-/// exactly what it itself last typed (`"PARTIAL"`, 7 chars) — accurate only
-/// because nothing rewrote the buffer in between.
+/// partial ("PARTIAL") is never sentinel-wrapped — only terminals carry an
+/// inline `@@…@@` token (ADR-2) — so Plover types it as plain literal text
+/// and the plugin never touches it. When the chord extends to the terminal,
+/// Plover corrects by backspacing exactly what it itself last typed
+/// (`"PARTIAL"`, 7 chars) — accurate only because nothing rewrote the buffer
+/// in between.
 const CHORD_LUA: &str = r#"
 local M = require("steno-ts")
-local fixture = vim.fn.tempname() .. ".json"
-local fd = assert(io.open(fixture, "w"))
-fd:write(vim.json.encode({
-  ["STROKE-A/STROKE-B"] = "function ${1}(${2}): number {\n${0}\\}",
-}))
-fd:close()
-
-M.setup({ snippets_path = fixture, filetypes = {} })
+M.setup({ filetypes = {} })
 vim.bo.filetype = "typescript"
 
--- Mirrors Plover's own correction model: delete the `backspace`
--- characters it remembers typing, then type the replacement.
+local NL = vim.fn.nr2char(0x2424)
+local token = "@@function ${1}(${2}): number {" .. NL .. "${0}\\}@@"
+
+-- Mirrors Plover's own correction model: delete the `backspace` characters it
+-- remembers typing, then type the replacement.
 local function plover_type(backspace, text)
   local cur = vim.api.nvim_win_get_cursor(0)
   local row, col = cur[1] - 1, cur[2]
@@ -147,7 +143,7 @@ vim.api.nvim_win_set_cursor(0, { 1, #"PREFIX" })
 plover_type(0, "PARTIAL")
 M._try_expand()
 
-plover_type(#"PARTIAL", "@@STROKE-A/STROKE-B@@")
+plover_type(#"PARTIAL", token)
 M._try_expand()
 
 local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)

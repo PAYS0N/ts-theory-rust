@@ -75,5 +75,13 @@ echo "==> make"
 UF2="$BUILD_DIR/javelin-steno-pico.uf2"
 [[ -f "$UF2" ]] || fail "build finished but $UF2 was not produced"
 
+# --- Step 6: flash-extent guard ---------------------------------------------
+# A linked image is not yet a flashable one: nothing in the toolchain knows
+# about javelin's reserved asset addresses, so an over-budget image builds
+# clean and only fails on the device. Refuse to report a .uf2 that would
+# destroy the config block and button script when flashed.
+echo "==> checking flash extent"
+bash "$ROOT/scripts/flash_extent_check.sh" "$ROOT" || fail "flash_extent_check.sh failed"
+
 echo "OK: build_firmware: $UF2"
 exit 0

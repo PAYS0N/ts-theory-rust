@@ -8,7 +8,7 @@
 
 use steno::{
     Entry, EntryFlags, SENTINEL_CLOSE, SENTINEL_OPEN, TypedEntry, build_snippets, expand_dict,
-    parse_source, parse_template, render_snippet,
+    parse_source, parse_template, render_snippet, wrap_inline_body,
 };
 
 /// Read the real dict.steno corpus from the repository root.
@@ -127,17 +127,19 @@ fn build_no_collisions() {
     assert_eq!(build.collisions, Vec::<String>::new());
 }
 
-/// The Plover dict maps a stroke to its sentinel-wrapped token, itself
-/// wrapped in Plover's `{^}` glue so it attaches with no stray space.
+/// The Plover dict maps a stroke to its sentinel-wrapped LSP body (ADR-2's
+/// unified inline contract — the nvim plugin expands the captured body
+/// directly, no `snippets.json` lookup), itself wrapped in Plover's `{^}`
+/// glue so it attaches with no stray space.
 #[test]
 fn plover_token_wrapped() {
     let entries = typed().unwrap();
     let build = build_snippets(&entries).unwrap();
     let token = build.plover_keys.get("STKWR-PBGS/TPH-FLT").unwrap();
-    assert_eq!(
-        token,
-        format!("{{^}}{SENTINEL_OPEN}STKWR-PBGS/TPH-FLT{SENTINEL_CLOSE}{{^}}")
-    );
+    let body = build.snippets.get("STKWR-PBGS/TPH-FLT").unwrap();
+    assert_eq!(token, &wrap_inline_body(body));
+    assert!(token.starts_with(&format!("{{^}}{SENTINEL_OPEN}")));
+    assert!(token.ends_with(&format!("{SENTINEL_CLOSE}{{^}}")));
 }
 
 /// A non-terminal partial is typed as plain `{^}...{^}` text, with no
@@ -201,24 +203,24 @@ fn no_terminal_is_a_prefix_of_another_stroke() {
     }
 }
 
-/// Every terminal's Plover token resolves to a snippet body, and there are
-/// over 1000 such bodies.
+/// Every terminal's Plover value is exactly its `key_id`'s snippet body,
+/// sentinel-wrapped (ADR-2: the plugin expands the captured body directly,
+/// no `snippets.json` lookup), and there are over 1000 such bodies.
 #[test]
 fn tokens_resolve_to_bodies() {
     let entries = typed().unwrap();
     let build = build_snippets(&entries).unwrap();
-    for (_, token) in build.plover_keys.iter() {
-        let Some(rest) = token
-            .strip_prefix("{^}")
-            .and_then(|t| t.strip_prefix(SENTINEL_OPEN))
-        else {
-            continue; // a non-terminal's plain-text value, not a token
-        };
-        let key = rest
-            .strip_suffix("{^}")
-            .and_then(|t| t.strip_suffix(SENTINEL_CLOSE))
-            .unwrap();
-        assert!(build.snippets.get(key).is_some(), "token {key} has a body");
+    for (key_id, token) in build.plover_keys.iter() {
+        if !token.starts_with(&format!("{{^}}{SENTINEL_OPEN}")) {
+            continue; // a non-terminal's plain-text value, not a sentinel token
+        }
+        let body = build.snippets.get(key_id);
+        assert!(body.is_some(), "token {key_id} has a body");
+        assert_eq!(
+            token,
+            &wrap_inline_body(body.unwrap()),
+            "token {key_id} round-trips"
+        );
     }
     assert!(
         build.snippets.len() > 1000,

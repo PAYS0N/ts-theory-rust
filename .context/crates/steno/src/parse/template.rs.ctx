@@ -1,5 +1,0 @@
-Parses template strings into chunks: the literal text, escapes (`\n`, `\t`), braces, and operators (`%d` for dcount, `%t` for type slot, `%[...]` for repeats, `%(...)` for computed expressions). Entry point is `parse_template(src, line) -> Result<Vec<Chunk>, StenoError>`.
-
-The operator syntax is strict: `%` followed by a single character for simple slots, or `%[` / `%(` for block constructs. Unterminated repeats, escapes, and computed expressions all error with column position. Backslash escapes `\n`, `\t`, `\{`, `\}`, `\%`, `\|`, `\\`, `` \` `` as literals; unknown escapes fail.
-
-Repeats (`%[...%]`) are two-segment: `parse_chunks(stop_on_pipe=true)` reads until `|` (if present) or `%]`; the first segment becomes separator, the second (or the whole thing if no `|`) becomes body. Computed expressions (`%(...)`) extract everything between `%(` and `)`, then call `super::expr::parse_expr` to validate syntax; a malformed expression returns `StenoError`.

@@ -30,16 +30,17 @@ pub use editor::{
 };
 pub use error::{ExpandError, RenderError, SnippetError, StenoError, StrokeError};
 pub use expand::{
-    Construct, ExpandedEntry, ITERATION_BASE, InfType, TypeDef, TypeOptions, TypeSet, TypedEntry,
-    WalkResult, build_constructs, build_tables, build_type_set, build_types, check_fuse_ambiguity,
-    display_text, emit_data_header, emit_test_header, expand_all, expand_counts, expand_dict,
-    expand_line_flag, expand_types, expand_types_one, render_filled, template_fragments, walk,
+    Construct, ExpandedEntry, ITERATION_BASE, InfType, Profile, TemplateOp, TypeDef, TypeOptions,
+    TypeSet, TypedEntry, WalkResult, build_constructs, build_tables, build_type_set, build_types,
+    check_fuse_ambiguity, emit_data_header, emit_test_header, expand_all, expand_counts,
+    expand_dict, expand_line_flag, expand_types, expand_types_one, render_walk, template_ops, walk,
 };
 pub use json_out::{OrderedMap, json_string, to_json};
 pub use parse::{Chunk, Entry, EntryFlags, Expr, parse_source, parse_template};
 pub use render::{BuildResult, build_plain_dict, build_smart_dict, render_plain, render_smart};
 pub use snippet::{
-    SENTINEL_CLOSE, SENTINEL_OPEN, SnippetBuild, SnippetEntry, build_snippets, render_snippet,
+    INLINE_NEWLINE, SENTINEL_CLOSE, SENTINEL_OPEN, SnippetBuild, SnippetEntry, build_snippets,
+    render_snippet, wrap_inline_body,
 };
 pub use stroke::{
     CountBank, CountBit, KeySet, LEFT_ORDER, MID_ORDER, RIGHT_ORDER, Side, StrokeKeys, add_key,
