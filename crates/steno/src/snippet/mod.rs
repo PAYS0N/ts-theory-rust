@@ -23,13 +23,17 @@ pub const SENTINEL_CLOSE: &str = "@@";
 
 /// Stand-in for a real newline inside an inline nvim body embedded between the sentinels.
 ///
-/// Plover's own translation format treats a literal `\n` atom as "press
-/// Enter" (see `editor::serialize::push_escaped_char`) — reusing it here
-/// would split the Plover-typed `@@...@@` span across buffer lines before the
-/// nvim plugin ever sees it. This marker types as inert text; the plugin
-/// swaps it back for a real newline before expanding. Keep in sync with the
-/// nvim plugin.
-pub const INLINE_NEWLINE: &str = "\u{2424}";
+/// Plover's own translation format treats a literal, *unescaped* `\n` atom as
+/// "press Enter" (see `editor::serialize::push_escaped_char`) — reusing it
+/// here would split the Plover-typed `@@...@@` span across buffer lines
+/// before the nvim plugin ever sees it. So `plover_inline_escape` emits this
+/// marker with its backslash escaped (`\\n` in the Plover value), which
+/// Plover's parser reproduces verbatim as the two literal characters
+/// `\` and `n` — ordinary keys any keyboard can type, unlike a raw Unicode
+/// symbol a stenotype can't emit. The plugin matches that literal `\n` in
+/// the typed buffer text and swaps it back for a real newline before
+/// expanding. Keep in sync with the nvim plugin.
+pub const INLINE_NEWLINE: &str = r"\n";
 
 /// Escape an LSP snippet body for inline embedding inside a Plover `{^}...{^}` value.
 ///
@@ -38,7 +42,8 @@ pub const INLINE_NEWLINE: &str = "\u{2424}";
 /// braces get Plover's own `\{`/`\}` escape (so Plover's own typing resolves
 /// them back to literal characters instead of parsing a command group — see
 /// `editor::serialize::push_escaped_char`); and real newlines become
-/// [`INLINE_NEWLINE`].
+/// [`INLINE_NEWLINE`], itself escaped so Plover types it verbatim instead of
+/// pressing Enter.
 fn plover_inline_escape(body: &str) -> String {
     let mut out = String::new();
     for ch in body.chars() {
@@ -46,7 +51,10 @@ fn plover_inline_escape(body: &str) -> String {
             '\\' => out.push_str("\\\\"),
             '{' => out.push_str("\\{"),
             '}' => out.push_str("\\}"),
-            '\n' => out.push_str(INLINE_NEWLINE),
+            '\n' => {
+                out.push('\\');
+                out.push_str(INLINE_NEWLINE);
+            },
             _ => out.push(ch),
         }
     }

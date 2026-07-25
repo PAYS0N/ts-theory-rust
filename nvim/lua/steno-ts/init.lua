@@ -2,8 +2,9 @@
 --
 -- A terminal Plover entry types a sentinel-wrapped token «@@<body>@@» whose
 -- interior IS the LSP snippet body, with each real newline encoded as the
--- INLINE_NEWLINE marker (U+2424) so the token survives Plover's typing on one
--- buffer line. This plugin watches insert mode; when a complete token appears
+-- INLINE_NEWLINE marker (literal "\n": backslash + n) so the token survives
+-- Plover's typing on one buffer line. This plugin watches insert mode; when a
+-- complete token appears
 -- it deletes the token, decodes the marker back to "\n", and expands the body
 -- via Neovim's built-in `vim.snippet` (requires 0.10+). No snippets.json — the
 -- Plover value is self-sufficient (see docs/DECISIONS.md ADR-2).
@@ -15,8 +16,10 @@ local M = {}
 local OPEN = "@@"
 local CLOSE = "@@"
 
--- Must match INLINE_NEWLINE in crates/steno/src/snippet/mod.rs (U+2424).
-local INLINE_NEWLINE = vim.fn.nr2char(0x2424)
+-- Must match INLINE_NEWLINE in crates/steno/src/snippet/mod.rs: the two
+-- literal, keyboard-producible characters backslash + "n" (not an actual
+-- newline, and not a Unicode symbol Plover's typing can't reproduce).
+local INLINE_NEWLINE = "\\n"
 
 local config = {
   -- Only expand in these buffers (empty = any buffer).

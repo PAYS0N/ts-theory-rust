@@ -123,13 +123,17 @@ uint32_t TabIndex(const GenConstruct &c, uint32_t n) {
   return 0; // unreachable: n is always one of this construct's own landings
 }
 
-// The 3 UTF-8 bytes of U+2424 (SYMBOL FOR NEWLINE), standing in for a real
-// newline inside an inline LSP body so the sentinel span survives Plover
-// typing the value on one buffer line (ADR-2).
-const char *INLINE_NEWLINE = "\xE2\x90\xA4";
+// The literal, keyboard-producible marker "\n" (backslash + n), standing in
+// for a real newline inside an inline LSP body so the sentinel span survives
+// Plover typing the value on one buffer line (ADR-2). Written escaped
+// (`\\n`) below so Plover's parser reproduces it verbatim as these two
+// characters instead of pressing Enter — a raw, unescaped Unicode symbol
+// isn't something a stenotype keyboard can actually emit.
+const char *INLINE_NEWLINE = "\\n";
 
 // wrapInlineBody's char-level escape: `\`, `{`, `}` are backslash-escaped;
-// a real newline becomes INLINE_NEWLINE; everything else verbatim.
+// a real newline becomes an escaped INLINE_NEWLINE; everything else
+// verbatim.
 void AppendWrappedInlineBody(Arena &arena, const char *body) {
   for (const char *s = body; *s; ++s) {
     const char ch = *s;
@@ -140,6 +144,7 @@ void AppendWrappedInlineBody(Arena &arena, const char *body) {
     } else if (ch == '}') {
       arena.Push("\\}");
     } else if (ch == '\n') {
+      arena.Push("\\");
       arena.Push(INLINE_NEWLINE);
     } else {
       arena.PushChar(ch);

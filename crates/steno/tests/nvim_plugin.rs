@@ -84,8 +84,9 @@ local M = require("steno-ts")
 M.setup({ filetypes = {} })
 vim.bo.filetype = "typescript"
 
--- INLINE_NEWLINE (U+2424) encodes the body's single real newline.
-local NL = vim.fn.nr2char(0x2424)
+-- INLINE_NEWLINE ("\n": literal backslash + n) encodes the body's single
+-- real newline.
+local NL = "\\n"
 local token = "@@if(${1}) {" .. NL .. "${0}\\}@@"
 
 vim.api.nvim_buf_set_lines(0, 0, -1, false, { token })
@@ -125,7 +126,7 @@ local M = require("steno-ts")
 M.setup({ filetypes = {} })
 vim.bo.filetype = "typescript"
 
-local NL = vim.fn.nr2char(0x2424)
+local NL = "\\n"
 local token = "@@function ${1}(${2}): number {" .. NL .. "${0}\\}@@"
 
 -- Mirrors Plover's own correction model: delete the `backspace` characters it
