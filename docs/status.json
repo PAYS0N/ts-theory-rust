@@ -26,5 +26,12 @@
     "description": "add a set of menuing strokes that ask questions about the setup (in a 'press { enter' and ask \"did the brace autoclose?\") and navigate to the correct dict",
     "impact": "low",
     "difficulty": "hard"
+  },
+  {
+    "id": 5,
+    "task": "determine structural limits",
+    "description": "A critical bug was caused by the image overwriting it's allowed window, interfering with the next block. I want to understand a) what that restriction means in terms of what is implementable and b) what other hardware limits we are dealing with that could interrupt implementation",
+    "impact": "high",
+    "difficulty": "hard"
   }
 ]

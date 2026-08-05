@@ -153,7 +153,7 @@ fn non_terminal_plover_key_has_no_sentinel() {
     assert!(!e.terminal);
     let build = build_snippets(&entries).unwrap();
     let value = build.plover_keys.get("STKWR-PBGS/PR-FLT").unwrap();
-    assert_eq!(value, "{^}function : Promise {^}");
+    assert_eq!(value, "{^}function : Promise{^ ^}{^}");
     assert!(!value.contains(SENTINEL_OPEN), "no sentinel on a partial");
 }
 

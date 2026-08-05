@@ -1,6 +1,7 @@
 //! Assemble the two nvim build artifacts from rendered [`SnippetEntry`]s.
 
 use super::{SnippetEntry, render_snippet, wrap_inline_body};
+use crate::editor::escape_text;
 use crate::error::SnippetError;
 use crate::expand::TypedEntry;
 use crate::json_out::OrderedMap;
@@ -21,13 +22,19 @@ pub struct SnippetBuild {
 /// Insert a non-terminal's plain `{^}...{^}` value (no sentinel — see
 /// [`build_snippets`]), flagging a collision if the stroke already mapped to
 /// something different.
+///
+/// `body` is typed directly by Plover (never looked up by the nvim plugin),
+/// so it needs the same escaping the plain/smart profiles use: a raw
+/// control character like `\n`/`\t` has no key a stenotype can press, so
+/// [`escape_text`] turns it into the literal two-character form Plover's own
+/// parser reproduces verbatim instead of trying to type it.
 fn insert_non_terminal(
     plover_keys: &mut OrderedMap,
     collisions: &mut Vec<String>,
     key_id: String,
     body: &str,
 ) {
-    let value = format!("{{^}}{body}{{^}}");
+    let value = format!("{{^}}{}{{^}}", escape_text(body));
     if plover_keys.get(&key_id).is_some_and(|prev| *prev != value) {
         collisions.push(key_id.clone());
     }

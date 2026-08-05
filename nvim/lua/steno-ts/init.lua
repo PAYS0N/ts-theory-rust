@@ -3,10 +3,10 @@
 -- A terminal Plover entry types a sentinel-wrapped token «@@<body>@@» whose
 -- interior IS the LSP snippet body, with each real newline encoded as the
 -- INLINE_NEWLINE marker (literal "\n": backslash + n) so the token survives
--- Plover's typing on one buffer line. This plugin watches insert mode; when a
--- complete token appears
--- it deletes the token, decodes the marker back to "\n", and expands the body
--- via Neovim's built-in `vim.snippet` (requires 0.10+). No snippets.json — the
+-- Plover's typing on one buffer line. This plugin
+-- watches insert mode; when a complete token appears it deletes the token,
+-- decodes the markers back to real newline/tab, and expands the body via
+-- Neovim's built-in `vim.snippet` (requires 0.10+). No snippets.json — the
 -- Plover value is self-sufficient (see docs/DECISIONS.md ADR-2).
 
 local M = {}

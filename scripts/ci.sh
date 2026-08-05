@@ -30,6 +30,10 @@ RUN "cargo fmt --check" cargo fmt --all -- --check
 PHASE "Compiler + clippy"
 RUN "cargo clippy" env RUSTFLAGS="-D warnings" cargo clippy --all-targets --all-features -- -D warnings
 
+PHASE "Build outputs"
+RUN "build-dict" cargo run -q --bin build-dict
+RUN "build-nvim" cargo run -q --bin build-nvim
+
 PHASE "Documentation"
 RUN "cargo doc" env RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace
 

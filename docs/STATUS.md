@@ -8,6 +8,7 @@ impact band.
 
 | task | description | impact | difficulty |
 |---|---|---|---|
+| determine structural limits | A critical bug was caused by the image overwriting it's allowed window, interfering with the next block. I want to understand a) what that restriction means in terms of what is implementable and b) what other hardware limits we are dealing with that could interrupt implementation | high | hard |
 | add ability to skip Array<> typing when in %t for static mode | there are many different protocols for type management due to space constraints; minimum add the task title, but also ideally create some standardization. | high | easy/medium |
 | add things like [number, number] | just finding a stroke system for this | medium | easy |
 | unify fuse treatment | %T (fuse-target type slot) and its C++ profile-renderer integration now exist for the programmatic (`dict.infinite.steno`) path; the static `dict.steno` path's `@fuse` still resolves without `%T` (see steno-format.md) — remaining work is deciding whether/how to bring `%T` to the static side | medium | medium |

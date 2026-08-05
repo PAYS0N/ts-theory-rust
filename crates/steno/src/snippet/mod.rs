@@ -41,9 +41,11 @@ pub const INLINE_NEWLINE: &str = r"\n";
 /// interpreting the next character as one of Plover's own escapes; structural
 /// braces get Plover's own `\{`/`\}` escape (so Plover's own typing resolves
 /// them back to literal characters instead of parsing a command group — see
-/// `editor::serialize::push_escaped_char`); and real newlines become
+/// `editor::serialize::push_escaped_char`); real newlines become
 /// [`INLINE_NEWLINE`], itself escaped so Plover types it verbatim instead of
-/// pressing Enter.
+/// pressing Enter. A real tab is left as-is: unlike Enter, pressing Tab
+/// doesn't split the Plover-typed value across buffer lines, so it can't
+/// break the sentinel span the way an unescaped newline would.
 fn plover_inline_escape(body: &str) -> String {
     let mut out = String::new();
     for ch in body.chars() {
